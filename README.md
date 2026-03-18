@@ -32,7 +32,7 @@ The Entra Private Network Connector (App Proxy) handles outbound-only requests, 
 | Layer | Technology / Vendor | Role in the Integration |
 | :--- | :--- | :--- |
 | Virtualisation | Proxmox and GNS3 | System-wide hypervisor and nested network orchestration. |
-| Security Hub | Palo Alto VM-Series | NVA, DHCP Server, Symmetric PBF, and Tunnel 300. |
+| Security Hub | Palo Alto VM-Series | NVA, DHCP Server, Symmetric PBF, and VPN Tunnels. |
 | Policy | Aruba ClearPass | RADIUS/802.1X, DUR delivery, and Intune Extension. |
 | Endpoint | Microsoft Intune | SCEP/NDES lifecycle and Compliance Posture. |
 | Edge | Aruba AOS-CX | Policy Enforcement Point (PEP) for 802.1X and DUR. |
