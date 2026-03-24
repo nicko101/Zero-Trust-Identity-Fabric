@@ -1,53 +1,58 @@
-# Implementation Logic: Azure Transit Security Hub
+# Implementation Logic: Core Fabric Components
 
-This directory documents the implementation of the Azure-based security fabric. It details the routing logic, NVA configuration, and hybrid transit paths required to maintain stateful inspection between the on-premises DC and the Azure cloud spokes.
+This directory documents the low-level implementation details of the on-premises and hybrid infrastructure.
 
 ---
 
-## 1. Azure VNet Routing and Transit Logic
-The Hub and Spoke architecture utilizes User-Defined Routes (UDR) to force-tunnel traffic through the Palo Alto NVAs for inspection.
+## 1. Virtualization Foundation
+The environment is built on a high-availability Proxmox VE cluster.
 
-* **Spoke Route Tables:** Directs all inter-spoke and egress traffic to the NVA Internal Load Balancer (ILB).
-![Spoke Route Table](./images/az-route-table-spokes.png)
-* **VPN Gateway Routing:** Ensures return traffic from the S2S tunnel is sent back through the NVA cluster.
-![VPN Gateway Route Table](./images/az-route-table-vpngw.png)
-* **Spoke-to-ILB Integration:**
-![RT Spoke ILB](./images/rt-spoke-ilb.png)
+* **Compute Resources:** Managed via a central dashboard to ensure high-availability.
+![Proxmox VMs](./images/proxmox_vms.png)
 
-## 2. VNet Peering and Fabric Connectivity
-Full-mesh peering between the Transit Hub and Spoke VNets, configured with "Use Remote Gateways" and "Allow Forwarded Traffic."
+## 2. Hybrid Identity and Cloud Integration
+Integration with Microsoft Entra ID and Intune is the cornerstone of the Zero Trust model.
 
-* **NVA to Spoke Peering:**
-![NVA Spoke Peering](./images/azure_peering_nva-spoke.png)
-* **VPNGW to NVA Transit:**
-![VPNGW NVA Peering](./images/azure_peering_vpng-nva.png)
+* **Identity Synchronization:** Managed via Entra Connect.
+![Entra Connect](./images/entra_connect.png)
+![Nick Tenant](./images/nick-tenant.png)
 
-## 3. Hybrid Connectivity and BGP Handshake
-The connection between the on-premises Palo Alto and Azure VPN Gateway is managed via dynamic BGP routing over IPsec.
+* **Enterprise Applications:** Specific app registrations for GlobalProtect and ClearPass.
+![Enterprise Apps](./images/enterprise-apps.png)
+![Tenant Apps](./images/tenant-apps.png)
 
-* **BGP Adjacency:** Confirms the route exchange between the DC and Azure.
-![BGP Established](./images/bgp_establishd.png)
-* **IPsec Tunnel Status:**
-![On-Prem Tunnels](./images/onprem_tunnells.png)
-![NVA Tunnels](./images/nva-tunnels.png)
+## 3. PKI Automation and SCEP Delivery
+The certificate lifecycle is automated to support 802.1X and secure management access.
 
-## 4. NVA Security Logic (Palo Alto)
-Stateful Layer 7 inspection and Symmetric Policy Based Forwarding (PBF) ensure traffic is inspected without causing asymmetric routing issues.
+* **Certificate Templates:** Customized for computer and user authentication.
+![Certificate Templates](./images/certificate-templates.png)
+![CA Template](./images/ca-template.png)
 
-* **Virtual Routers (Trust/Untrust):**
-![VR Trust](./images/nva_vr_trust.png)
-![VR Untrust](./images/nva-vr-untrust.png)
-* **Symmetric PBF:** Critical for maintaining session state across the NVA cluster.
-![NVA PBF](./images/nva_pbf.png)
-* **NAT Policies:**
-![NVA NAT](./images/nva-NAT.png)
-* **External Dynamic Lists (EDL):**
-![Palo EDL](./images/palo_EDL_out.png)
+* **NDES and Certificate Connector:**
+![Intune Cert Connector](./images/intune-certconnector.png)
+![Intune Service](./images/intune-certificate-connector-service.png)
 
-## 5. High Availability and Load Balancing
-The Azure Internal Load Balancer (ILB) acts as the Next Hop for all UDRs, distributing traffic across the Active/Active NVA pair.
+* **Registry Hardening:** MSCEP regedit configurations for SCEP challenges.
+![NDES Regedit](./images/ndes_msec_regedit.png)
 
-* **ILB VIP Configuration:**
-![Azure ILB VIP](./images/az_ilb_vip.png)
-* **Session Persistence:** Configured to ensure traffic for the same flow returns to the same NVA instance.
-![Session Persistence](./images/il_session_persisstence_none_traffic_lb.png)
+## 4. Secure Outbound Connectivity (App Proxy)
+The Entra Private Network Connector avoids inbound firewall holes.
+
+* **Outbound Tunnel:** Secure path for Intune to communicate with NDES.
+![App Proxy](./images/app-proxy.png)
+![App Proxy Config](./images/app-proxy-config.png)
+
+## 5. Network Management and Orchestration
+* **ArubaOS-CX Switching:** Orchestrated via NetEdit.
+![NetEdit](./images/netedit.png)
+
+* **Wireless Fabric:** IAP portal and Aruba Central integration.
+![IAP Portal](./images/iap_portal.png)
+![Aruba Central AP](./images/screenshot-aruba_cental_ap.png)
+
+---
+
+## General Implementation Evidence
+![Palo Service Account](./images/service_account_palo.png)
+![Connection Proof](./images/proof_connection.png)
+![Subscription Info](./images/sub.png)

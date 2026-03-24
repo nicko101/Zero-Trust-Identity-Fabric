@@ -47,4 +47,4 @@ This project goes beyond standard documentation to solve specific enterprise-gra
 * [ArubaOS-CX Switching & Port Access](./docs/tech-notes/aruba-cx-switching.md)
 * [ClearPass Advanced Services](./docs/tech-notes/clearpass-advanced-services.md)
 * [SIEM & SecOps: Centralized Logging](./docs/tech-notes/secops-siem-observability.md)
-* [Offensive Validation & Pentesting](./docs/tech-notes/pentesting-offensive-validation.md)
+* [Offensive Validation & Pentesting](./docs/tech-notes/pentesting-offensive-validation.md)N
