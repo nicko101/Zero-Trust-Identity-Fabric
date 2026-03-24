@@ -28,22 +28,22 @@ Technical proof of the split-routing logic, demonstrating traffic steering acros
 ![NVA vs Gateway Pathing](./images/proof_split_routing_nva_gw_.png)
 
 * **Traceroute & ICMP Path Validation:**
-![Routing Logic](./images/proof_split_routing_.png)
+![Routing Logic](./images/proof_split_routing_nva_gw_.png)
 ![POC Verification](./images/proof_poc_split_routing.png)
 
 ---
 
-## 3. NVA Inspection & Flow Evidence
-Validation that traffic hitting Azure Spokes is successfully backhauled to the Palo Alto NVA for Layer 7 inspection and User-ID mapping.
+## 3. NVA Inspection & Hybrid Identity Proof
+Validation that traffic hitting Azure Spokes, and critical hybrid identity flows, are successfully steered through the NVA for inspection.
 
-* **Palo Alto NVA Flow Logs:**
+* **Palo Alto NVA Flow Logs (On-Prem to Cloud RADIUS):** Proves the NVA is successfully intercepting and permitting the authentication traffic from the physical edge.
 ![NVA Inspection Logs](./images/logs_onprem_pa-cppmvm1812.png)
+
+* **ClearPass PEAP Authentication Success:** This high-detail Access Tracker capture from `CPPM3` (Azure) is the definitive proof of the hybrid solution. It shows successful **PEAP-MSCHAPv2** authentication for on-premises clients (`lab-wired` service) traversing the Azure Transit Hub.
+![ClearPass PEAP Success](./images/proof_logs_cppm_vm_peap.png)
 
 * **End-to-End Traffic Flow Proof:**
 ![General Proof](./images/proof.png)
-
-* **Azure Spoke Client Validation:**
-![Spoke Client Proof](./images/proof_client_spokes.png)
 
 ---
 
