@@ -1,43 +1,44 @@
-# implementation logic: azure transit security hub
+# Design Standards: Azure Transit Security Hub
 
-this directory documents the as-built configuration that executes the dual-tunnel transit design. it details the specific azure routing tables, load balancer configurations, and nva traffic steering logic required to maintain stateful inspection.
+This document defines the architectural standards for the Cloud Security Edge. It outlines the requirements for high-availability transit, stateful inspection, and the dual-tunnel hybrid backbone.
 
 ---
 
-## 1. direct s2s tunnel & internet breakout (tunnel 1)
-the implementation utilizes a direct s2s ipsec tunnel terminating on the palo alto nva for all internet-bound traffic originating from the on-premises site 1.
+## 1. Architectural Challenges and Solutions
+Before the implementation of this transit hub, the hybrid cloud architecture faced several critical engineering challenges. The current design was developed specifically to overcome these hurdles:
 
-* **logic:** by terminating the tunnel directly on the nva (via the external load balancer), we bypass the standard azure gateway for internet-bound traffic. this ensures the palo alto l7 engine has full visibility into outbound flows before they exit the azure edge.
-* **split routing proof:** validation of the split tunnel architecture separating internet and backbone traffic.
-![split routing proof](../validation-proof/images/proof_split_routing.png)
-* **deep dive:** [palo alto azure transit](../../docs/tech-notes/palo-azure-transit.md)
+| Challenge | Architectural Solution |
+| :--- | :--- |
+| **Asymmetric Routing:** Azure's default system routes often bypass NVAs on return paths, breaking stateful inspection. | **Load Balancer Sandwich:** Using an ILB as the Next Hop ensures all return traffic is steered back to the active NVA. |
+| **NVA Failover Latency:** Manual UDR updates during an NVA failure cause significant downtime. | **Standard Load Balancer (SLB) HA:** Automated health probes (TCP 22) trigger sub-second failover between NVA instances. |
+| **"Short-cut" Traffic:** On-premises traffic often bypasses security by routing directly from the Gateway to Spokes. | **GatewaySubnet UDR:** Forcing a 0.0.0.0/0 route on the GatewaySubnet to the NVA Trust IP eliminates the "short-cut." |
+| **Visibility Gaps:** Standard VPN Gateways provide limited Layer 7 visibility into internet-bound traffic. | **Direct S2S Tunnel (Tunnel 1):** Terminating the tunnel directly on the NVA ensures L7 inspection for all outbound flows. |
 
-## 2. ingress steering & vpn gateway udr (tunnel 2)
-to satisfy the requirement for 100% inspection of hybrid traffic, native azure system routing is overridden at the gateway level.
 
-* **logic:** a user-defined route (udr) is attached to the gatewaysubnet. this route table forces traffic arriving from the on-premises vpn gateway to hit the nva trust interface before reaching the spokes.
-* **nva gateway routing proof:**
-![nva gateway udr](../validation-proof/images/proof_split_routing_nva_gw_.png)
-* **vpn to spoke flow logs:**
-![vpn spoke logs](../validation-proof/images/2303_logs_vpn_gw_spoke.png)
 
-## 3. spoke egress & traffic steering
-workload spokes are configured to recognize the transit hub as their primary security boundary.
+## 2. High Availability (HA) Standards
+The transit hub must maintain session state and connectivity during an NVA instance failure. 
 
-* **logic:** subnet-level udrs point the default route and inter-vnet routes to the internal load balancer vip. 
-* **spoke client validation:**
-![spoke egress proof](../validation-proof/images/proof_client_spokes.png)
+* **The Load Balancer Sandwich:** To achieve NVA clustering in Azure, a "sandwich" design is required. 
+    * **External Standard Load Balancer (ELB):** Interfaces with the internet/untrust zone to manage ingress traffic.
+    * **Internal Standard Load Balancer (ILB):** Interfaces with the trust zone to act as the Next Hop for all internal traffic.
+* **Health Monitoring:** Health probes must be configured to ensure the load balancers only forward traffic to active, responsive security nodes.
 
-## 4. high availability & backbone bgp
-the hybrid backbone utilizes dynamic routing to share spoke address spaces while maintaining the isolated overlay for inspection.
+## 3. Hybrid Connectivity: Dual-Tunnel Strategy
+To balance management accessibility with high-security inspection, the architecture mandates a dual-tunnel approach between on-premises and Azure.
 
-* **bgp adjacency:** validation of the bgp peering established over the vpn gateway tunnel.
-![bgp established](../validation-proof/images/palo-azure_vpngw_bgp.png)
-* **poc architecture view:**
-![poc split routing](../validation-proof/images/proof_poc_split_routing.png)
+* **Tunnel 1 (Direct NVA):** Terminated directly on the NVA cluster. This is the primary path for high-security workloads and internet breakout, ensuring Layer 7 inspection at the Azure edge.
+* **Tunnel 2 (VPN Gateway):** Terminated on the native Azure VPN Gateway. This provides a resilient management backbone and serves as the BGP peering point for the internal network.
 
-## 5. security policy enforcement
-* **logic:** the palo alto utilizes user-id and security profiles to enforce the security mandate on all transit traffic.
-* **l7 inspection logs:**
-![palo alto logs](../validation-proof/images/logs_onprem_pa-cppmvm1812.png)
-* **deep dive:** [palo alto security logic](../../docs/tech-notes/palo-alto-security.md)
+## 4. Traffic Steering and Inspection Mandate
+The design enforces a "No Shortcut" policy where 100% of inter-zone and hybrid traffic must be inspected.
+
+* **Forced Tunneling:** All Spoke-to-Spoke and Spoke-to-On-Premises traffic must be steered to the NVA via User-Defined Routes (UDRs).
+* **Gateway Ingress:** Traffic arriving from the VPN Gateway must be intercepted at the GatewaySubnet and redirected to the NVA before it reaches its destination.
+
+## 5. Security Policy Standards
+* **User-ID:** Security policies must be identity-aware, leveraging the ClearPass/Active Directory integration.
+* **Inspection Profiles:** All transit traffic must be subjected to the "Strict" security profile, including Antivirus, Anti-Spyware, and Vulnerability Protection.
+
+---
+[Back to Top](#design-standards-azure-transit-security-hub) | [Back to Main Architecture](../../README.md)
