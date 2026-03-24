@@ -1,60 +1,59 @@
-# Validation Proof: Infrastructure Core
+# Validation Proof: Infrastructure Core Dossier
 
-This folder contains the technical evidence validating the baseline identity services, PKI hierarchy, and secure connector infrastructure for the hybrid environment.
+This folder contains the engineering blueprints and technical validation evidence for Lab02, synthesized through automated configuration analysis. This dossier proves the efficacy of the Zero Trust architecture.
 
 ## Table of Contents
-* [1. Identity Synchronization (Hybrid Domain)](#1-identity-synchronization-hybrid-domain)
-* [2. SCEP & Intune Certificate Infrastructure](#2-scep--intune-certificate-infrastructure)
-* [3. App Proxy & Secure Connector Services](#3-app-proxy--secure-connector-services)
-* [4. Network Management & Edge Baseline](#4-network-management--edge-baseline)
+* [1. Macro Architecture & Strategy](#1-macro-architecture--strategy)
+* [2. Pillar 1: Identity & PKI Automation](#2-pillar-1-identity--pki-automation)
+* [3. Pillar 2: Network Access Control (NAC)](#3-pillar-2-network-access-control-nac)
+* [4. Pillar 3: Perimeter Defense & Routing](#4-perimeter-defense--routing)
+* [5. Operational Synthesis & Telemetry](#5-operational-synthesis--telemetry)
 
 ---
 
-## 1. Identity Synchronization (Hybrid Domain)
-Validation of the bidirectional identity handshake between on-premises Active Directory and Entra ID. This ensures users and devices are recognized across the hybrid fabric.
+## 1. Macro Architecture & Strategy
+The foundational blueprint illustrating the global integration of Proxmox, Azure VPN, and the identity-driven security fabric.
 
-* **Entra Connect Sync Status:** ![Entra Connect](entra_connect.png)
-* **Hybrid Domain Baseline:** ![AD Setup](Screenshot%202025-12-06%20145951.png)
-
----
-
-## 2. SCEP & Intune Certificate Infrastructure
-Evidence validating the automated certificate enrollment pipeline. This confirms the Intune Certificate Connector is processing requests from the Issuing CA.
-
-* **Intune Certificate Connector Service:** ![Cert Connector Service](Intune%20Certificate%20Connector%20Service.png)
-* **Connector Health Verification:** ![Cert Connector Proof](Intune-CertConnector.png)
-* **Successful SCEP Enrollment:** ![SCEP Proof](proof_intune_scep.png)
-* **Client-Side Certificate Store:** ![SCEP Certs](scep-certs.png)
-* **Event Log Audit (Event 4000):** ![SCEP Event Log](event4000-proof-intune-scep.png)
+* **Master Macro-Architecture:** ![Master Blueprint](Zero%20Trust%20Engineering%20Blueprint1.png)
+* **Engineering Pillars & Tech Stack:** ![Tech Stack](Zero%20Trust%20Engineering%20Blueprint2.png)
 
 ---
 
-## 3. App Proxy & Secure Connector Services
-Verification of the outbound-only HTTPS conduit. These logs prove that NDES traffic is securely tunneled without inbound firewall exceptions.
+## 2. Pillar 1: Identity & PKI Automation
+Validation of the SCEP/NDES certificate pipeline, ensuring automated trust anchored by the Microsoft Issuing CA.
 
-* **App Proxy Connector Status:** ![App Proxy](app%20proxy.png)
-* **App Proxy Event Audit (Event 13001):** ![App Proxy Event](event_13001.png)
-* **NDES Secure Publishing Proof:** ![App Proxy Proof](proof-app-proxy.png)
-
----
-
-## 4. Network Management & Edge Baseline
-The foundational networking layer, demonstrating the orchestration of the Aruba AOS-CX fabric and initial 802.1X connectivity.
-
-* **Aruba NetEdit Orchestration:** ![NetEdit](netedit.png)
-* **AOS-CX 802.1X Authentication (PEAP):** ![CX Proof](cx_proof_sh_port_access_peap.png)
-* **Client Connection Baseline:** ![TEAP Windows](teap-windwos.png)
+* **Automating Trust Flow:** ![PKI Flow](Zero%20Trust%20Engineering%20Blueprint3.png)
+* **Proof of Delivery (SCEP in Action):** ![SCEP Health Card](Zero%20Trust%20Engineering%20Blueprint4.png)
+* **Infrastructure Baseline:** ![Connector Health](Zero%20Trust%20Engineering%20Blueprint5.png)
 
 ---
 
-## Access Validation-Proof Hub
-Validation evidence and configuration exports for the core infrastructure are centralized here to provide a baseline for the Transit and Identity modules.
+## 3. Pillar 2: Network Access Control (NAC)
+Real-time validation of device compliance and chained authentication using Aruba ClearPass and Microsoft Intune.
 
-### Cloud Networking: Evidence & Audit
-* **Infrastructure Baseline:** All identity and PKI connectors confirmed active.
-* **Service Redundancy:** Validated via hypervisor-level service availability.
+* **NAC Authentication Logic:** ![ClearPass Accept](Zero%20Trust%20Engineering%20Blueprint6.png)
+* **Authentication Evolution (TEAP):** ![TEAP Rationale](Zero%20Trust%20Engineering%20Blueprint7.png)
+* **Anatomy of Compliance Enforcement:** ![Compliance Mapping](Zero%20Trust%20Engineering%20Blueprint8.png)
 
 ---
 
-**Navigation**
-[Back to Parent Category](../) | [Back to Main Architecture](../../README.md)
+## 4. Pillar 3: Perimeter Defense & Routing
+Verification of Palo Alto L7 inspection, split-tunneling efficiency, and secure segmentation for guest/corporate traffic.
+
+* **Perimeter Architecture:** ![Perimeter Blueprint](Zero%20Trust%20Engineering%20Blueprint9.png)
+* **Secure Guest Connection (Phase 1):** ![Guest Foundation](Zero%20Trust%20Engineering%20Blueprint10.png)
+* **Active Security Inspection (Phase 2):** ![Active Inspection](Zero%20Trust%20Engineering%20Blueprint11.png)
+* **Proof of Concept: Split Routing:** ![Split Routing Proof](Zero%20Trust%20Engineering%20Blueprint12.png)
+
+---
+
+## 5. Operational Synthesis & Telemetry
+A holistic summary of the system state, demonstrating a stable, authenticated, and inspected environment.
+
+* **The Zero Trust Lifecycle:** ![Lifecycle Flow](Zero%20Trust%20Engineering%20Blueprint13.png)
+* **System Telemetry & Wrap-Up:** ![Final Telemetry](Zero%20Trust%20Engineering%20Blueprint14.png)
+
+---
+
+## Navigation
+[Back to Infrastructure Index](../README.md) | [Back to Main Architecture](../../README.md)

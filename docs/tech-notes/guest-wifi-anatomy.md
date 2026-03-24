@@ -1,19 +1,37 @@
-$guestContent = @'
 # Deep-Dive: Secure Guest WiFi Anatomy
 
-## 1. Phase 1: The Foundation (VLAN 50 Isolation)
-The Guest network is built on a "Zero-Trust" principle. 
-* **Layer 2 Isolation:** Guest traffic is tagged on **VLAN 50** from the AP to the Palo Alto.
-* **Zone Security:** The Palo Alto treats the Guest Zone as "Untrusted," strictly blocking any traffic destined for the `10.0.0.0/8` internal range via a "Drop-All-Internal" security policy.
+This document provides a comprehensive technical breakdown of how the lab fabric provides secure, NAC-driven internet access to untrusted devices while enforcing strict segmentation from the corporate LAN.
 
-## 2. Phase 2: The Action (Self-Registration Portal)
-Instead of a shared PSK, guests utilize a **Captive Portal** hosted on **Aruba ClearPass**.
-* **Self-Registration:** Guests enter their details (Name/Email) and receive temporary credentials.
-* **MAC Caching:** ClearPass remembers the device's MAC address for 24 hours, providing a seamless "re-connect" experience without requiring a second login.
+## 1. Executive Engineering Overview
+
+The entire guest connection lifecycle is visualized in the following high-level engineering schematic. This blueprint connects the conceptual segmentation with the active data flow and security policy enforcement.
+
+![Master Anatomy Diagram](../../03-identity-policy-engine/validation-proof/Secure%20Guest%20WiFi%20Connection%20Anatomy.png)
+
+This schematic highlights the critical relationship between the standard network hardware and the identity-driven security policies enforced by Aruba ClearPass and the Palo Alto NVA.
+
+## 2. Phase 1: Building the Secure Foundation (Segregation)
+
+The architecture begins with the "Zero-Trust" principle of immediate segmentation. A device associating with the "LAB" SSID is instantly segregated at the hardware level.
+
+![Guest Phase 1](../../03-identity-policy-engine/validation-proof/Zero%20Trust%20Engineering%20Blueprint10.png)
+
+* **Layer 2 Isolation:** Guest traffic is tagged on a dedicated, isolated **VLAN 50** from the virtual Aruba Access Point to the physical ArubaOS-CX virtual switch and up to the firewall sub-interface.
+* **Zone Security:** A dedicated "Guest Zone" (`10.0.50.1/24`) is created on the Palo Alto NVA, physically restricted to the `ethernet1/2.50` sub-interface. This zone has 0 trust by default.
+* **NAC Onboarding:** All device onboarding and captive portal redirection is handled exclusively through **Aruba ClearPass** to ensure identity validation.
+
+## 3. Phase 2: The Guest Connection in Action (Inspection & Policy)
+
+Once foundationally segregated, the connection enters the active phase, where identity dictates access.
+
+![Guest Phase 2](../../03-identity-policy-engine/validation-proof/Zero%20Trust%20Engineering%20Blueprint11.png)
+
+* **Self-Registration Portal:** The user (`nick@gmail.com`) connects to the 'LAB' SSID and is redirected to the customized Aruba ClearPass self-registration portal to complete onboarding.
+* **Active Security Inspection:** Every packet originating from the Guest Zone is subjected to active Layer 7 security inspection by the Palo Alto Threat Prevention engine.
+* **Policy in Action (iCloud Access):**
+    * **Allow Rule:** Policies are defined to allow required external services, such as iCloud (App-ID: `icloud-base`) on port 443.
+    * **Block Rule:** A strict implicit-deny rule blocks all lateral movement from the Guest Zone (`10.0.50.1/24`) into the primary `10.0.0.0/8` internal subnets.
 
 ---
-**Navigation**
-[Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)
-'@
 
-$guestContent | Out-File -FilePath ".\guest-wifi-anatomy.md" -Encoding utf8 -Force
+[Back to Engineering Analysis](../engineering-analysis.md)

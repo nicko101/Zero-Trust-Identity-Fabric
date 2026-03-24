@@ -1,59 +1,62 @@
-# Validation Proof: Identity Policy and Compliance Engine
+# Validation Proof: Identity and Policy Engine
 
-This folder contains the technical evidence validating the integration between Aruba ClearPass, Microsoft Intune, and the Aruba AOS-CX switching fabric.
+This folder contains the engineering blueprints and technical logs validating the Zero Trust Network Access (ZTNA) logic. This module represents the policy decision point where cryptographic identity and device posture are translated into network authorization.
 
 ## Table of Contents
-* [1. SCEP & NDES Certificate Lifecycle](#1-scep--ndes-certificate-lifecycle)
-* [2. Cloud Identity & Compliance Status](#2-cloud-identity--compliance-status)
-* [3. ClearPass Policy Processing (PDP)](#3-clearpass-policy-processing-pdp)
-* [4. Switch Enforcement & DUR (PEP)](#4-switch-enforcement--dur-pep)
+* [1. ZTNA Macro-Architecture](#1-ztna-macro-architecture)
+* [2. Identity and PKI Automation](#2-identity-and-pki-automation)
+* [3. NAC and MDM Integration (ClearPass and Intune)](#3-nac-and-mdm-integration-clearpass-and-intune)
+* [4. Endpoint Readiness and Compliance](#4-endpoint-readiness-and-compliance)
+* [5. Final Synthesis and Enforcement](#5-final-synthesis-and-enforcement)
 
 ---
 
-## 1. SCEP & NDES Certificate Lifecycle
-The following evidence confirms the automated issuance of machine certificates. This proves the "Registration Authority" handshake is functional via the Azure App Proxy.
+## 1. ZTNA Macro-Architecture
+High-level engineering dossiers illustrating the end-to-end integration of managed endpoints, hybrid cloud bridges, and the on-premises core.
 
-* **NDES/Intune Verification:** ![NDES Verify](dnes_scep_intune_verify.png)
-* **Intune Connector Logs (Event 4004):** ![Connector Logs](logs_ndes_4004_intune_connector_verify.png)
-* **App Proxy Success:** ![App Proxy](proof-app-proxy.png)
-* **SCEP Enrollment Profile:** ![Intune SCEP](proof_intune_scep.png)
-
----
-
-## 2. Cloud Identity & Compliance Status
-Before network access is granted, the device must exist in the cloud inventory and meet the "Healthy" posture requirements.
-
-* **Global Compliance Dashboard:** ![Compliance Dashboard](proof_compliance2.png)
-* **Individual Device Health Status:** ![Device Health](proof_compliant-device.png)
-* **ClearPass-to-Intune Attribute Mapping:** ![Posture Detail](proof-cppm-intune-compliance.png)
+* **ZTNA Master Blueprint:** ![Master Blueprint](ZTNAArchitecture1.png)
+* **Hybrid-Cloud Engineering Dossier:** ![Routing Dossier](ZTNAArchitecture2.png)
+* **Identity Synchronization Foundation:** ![Entra Connect Sync](ZTNAArchitecture3.png)
 
 ---
 
-## 3. ClearPass Policy Processing (PDP)
-These logs demonstrate ClearPass acting as the **Policy Decision Point (PDP)**. It validates the certificate, checks the Intune compliance attribute, and issues the RADIUS Accept.
+## 2. Identity and PKI Automation
+Validation of the secure outbound tunnel (App Proxy) and the SCEP certificate delivery pipeline.
 
-* **TEAP/PEAP Service Configuration:** ![TEAP Service](cppm_service_teap.png)
-* **Access Tracker: RADIUS Handshake:** ![RADIUS Logs](proof_logs_cppm_vm_peap.png)
-* **Intune Extension Logic:** ![Intune Extension](intune-extensin.png)
-* **DUR Authorization Profile:** ![DUR Logs](logs_cppm_dur.png)
-
----
-
-## 4. Switch Enforcement & DUR (PEP)
-The final stage of the handshake. The **Aruba AOS-CX** switch acts as the **Policy Enforcement Point (PEP)**, downloading and applying the user role.
-
-* **CLI: Port-Access Client Status:** ![Port Access](port-access-clients.png)
-* **Client-Side Connection Success:** ![TEAP Windows](teap-windwos.png)
+* **Data Flow: Secure Outbound Tunneling:** ![App Proxy Flow](ZTNAArchitecture4.png)
+* **Telemetry: App Proxy Execution:** ![App Proxy Logs](ZTNAArchitecture5.png)
+* **Cryptographic Mapping (NDES Registry):** ![NDES Registry](ZTNAArchitecture6.png)
+* **Middleware Status: Intune Certificate Connector:** ![Connector Health](ZTNAArchitecture7.png)
 
 ---
 
-## Access Validation-Proof Hub
-Validation evidence and configuration exports for this service are centralized in the module-level hub. 
+## 3. NAC and MDM Integration (ClearPass and Intune)
+Evidence of the policy engine querying the Microsoft Graph API to verify device health before granting access.
 
-* **Full Architecture Blueprint:** [Automated_Zero_Trust_Architecture.pdf](Automated_Zero_Trust_Architecture.pdf)
-* **Connection Anatomy Visual:** ![Connection Anatomy](Secure%20Guest%20WiFi%20Connection%20Anatomy.png)
+* **Automating Device Identity (SCEP Logic):** ![SCEP Profiles](ZTNAArchitecture8.png)
+* **End-to-End Cryptographic Delivery:** ![Cert Delivery Validation](ZTNAArchitecture9.png)
+* **Middleware Configuration: ClearPass Intune Extension:** ![Intune Extension](ZTNAArchitecture10.png)
+* **Data Translation Matrix (Compliance Dictionary):** ![Compliance Dictionary](ZTNAArchitecture11.png)
 
 ---
 
-**Navigation**
-[Back to Parent Category](../) | [Back to Main Architecture](../../README.md)
+## 4. Endpoint Readiness and Compliance
+Validation of the client-side state and the chained authentication protocol (TEAP) used to verify both machine and user.
+
+* **Authentication Evolution: Why TEAP?:** ![TEAP Rationale](ZTNAArchitecture12.png)
+* **Endpoint Supplicant Configuration:** ![TEAP Implementation](ZTNAArchitecture13.png)
+* **Pre-Authentication Readiness:** ![Compliance Verification](ZTNAArchitecture14.png)
+
+---
+
+## 5. Final Synthesis and Enforcement
+The successful conclusion of the ZTNA lifecycle, showing the transition from an unauthenticated request to a dynamic "ACCEPT" state.
+
+* **Synthesis: The Zero Trust Lifecycle:** ![ZTNA Synthesis](ZTNAArchitecture15.png)
+* **Edge Enforcement Verification:** ![Switch Port Success](port-access-clients.png)
+* **ClearPass Access Tracker Detail:** ![ClearPass Accept](cppm_service_teap.png)
+
+---
+
+## Navigation
+[Back to Main Architecture](../../README.md)
