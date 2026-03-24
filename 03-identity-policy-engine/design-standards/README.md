@@ -1,45 +1,46 @@
-# Hybrid Secure Network Anatomy
-## Full-Stack Enterprise ZTNA and Multi-Tunnel Transit Hub
+# Design Standards: Identity & Policy Orchestration
 
-![Hero Image](./diagrams/Automating%20Zero%20Trust%20Access%20Blueprint.png)
-
----
-
-### Executive Summary: The Technical Flow
-This architecture demonstrates a production-hardened Hybrid Zero Trust environment. It orchestrates a complex handshake between a Hybrid Active Directory Domain and Azure Cloud Services to enforce identity-based access.
-
-#### 1. [[The Virtualisation Layer (Proxmox and GNS3)]](./01-infrastructure-core/)
-The entire stack is virtualised on a Proxmox VE hypervisor cluster. A nested GNS3 Server orchestrates high-fidelity network hardware simulation, allowing for hardware-accurate execution of Aruba AOS-CX switching and Aruba ClearPass (CPPM) cluster logic in a controlled, sandboxed environment.
-
-#### 2. [[Authentication and Authorisation (802.1X and DUR)]](./03-identity-policy-engine/)
-On-premises clients connect via Aruba AOS-CX switches using 802.1X (TEAP/PEAP) against a Hybrid Domain (Synchronised via Entra Connect). 
-
-* **Policy Decision Point (PDP):** Authentication is handled by an Aruba ClearPass (CPPM) cluster (On-Prem or Azure VM).
-* **The Intune Extension:** During the RADIUS handshake, ClearPass utilises the Microsoft Intune Extension (v6.4.1) to query the Microsoft Graph API for real-time compliance status.
-* **Dynamic Enforcement:** Upon validation, ClearPass pushes a Downloadable User Role (DUR) to the switch. This DUR specifies the VLAN ID, while the Palo Alto NVA (acting as the DHCP Relay/Gateway) provides the IP address and stateful security.
-
-#### 3. [[The Dual-Tunnel Hybrid Transit Hub]](./02-transit-security-hub-azure/)
-* **The Internal Backbone (Tunnel 200):** Established as a Site-to-Site (S2S) IPsec tunnel between the On-Premises Palo Alto and the Azure VPN Gateway. Azure Route Tables are configured to force all incoming gateway traffic to the Palo Alto NVA Private IP, ensuring that even internal on-prem-to-spoke traffic undergoes full L7 inspection.
-* **The Secure Breakout (Tunnel 300):** Established as a direct S2S IPsec tunnel between the On-Premises Palo Alto and the Azure Palo Alto NVA. Using Palo Alto User-ID, on-prem identity is mapped to the firewall, allowing for user-based policies. This path ensures all traffic—both egress to the internet and ingress from the internet—undergoes stateful L7 inspection and Symmetric PBF, providing a dedicated and centralised high-security perimeter.
-* **Inspection Force-Multiplier:** All spoke-to-spoke, spoke-to-internet, and on-prem-to-cloud traffic is centralised through the NVA for a unified security posture.
-
-#### 4. [[Automated Identity Lifecycle (SCEP and App Proxy)]](./01-infrastructure-core/)
-The Entra Private Network Connector (App Proxy) handles outbound-only requests, allowing Microsoft Intune to communicate SCEP payloads to the internal NDES server without inbound firewall exceptions.
+This document defines the logical standards for the Policy Decision Point (PDP). It outlines the authentication protocols, authorization logic, and cloud-compliance integration required to enforce Zero Trust access.
 
 ---
 
-### Technical Tech Stack
-| Layer | Technology / Vendor | Role in the Integration |
+## 1. Authentication Standards (802.1X)
+To ensure the highest level of identity assurance, the fabric utilizes Tunneled Extensible Authentication Protocol (TEAP) to provide "Chained Authentication."
+
+* **Primary Protocol:** TEAP (EAP-FAST) with Chained Authentication.
+* **Inner Methods:** EAP-TLS for machine-based identity and EAP-MSCHAPv2 for user-based identity.
+* **Fall-back:** PEAP (EAP-MSCHAPv2) for legacy endpoints and BYOD.
+* **Logic Gate:** Access is only granted if both the machine (certificate) and user (credentials) are verified against the Hybrid Active Directory.
+
+## 2. ClearPass Cluster Design (PDP)
+The Aruba ClearPass Policy Manager (CPPM) is deployed as a highly available cluster to ensure continuous enforcement.
+
+* **Cluster Role:** Publisher/Subscriber model.
+* **Trust Anchor:** Rooted in the On-Premises Enterprise PKI for RADIUS server certificates.
+* **External Providers:** * **AD DS:** For identity lookups and group membership.
+  * **Microsoft Graph API:** For real-time endpoint compliance status via the Intune Extension.
+
+## 3. Compliance Integration: Intune Extension v6.4.1
+The policy engine is logically linked to Microsoft Intune to perform posture-based enforcement.
+
+* **The Integration Win:** ClearPass queries the Intune Extension during the RADIUS request.
+* **Compliance Flags:** Devices marked "Non-Compliant" in Intune (due to disk encryption, OS version, or firewall status) are automatically placed in a Quarantine role.
+* **Polling Interval:** Real-time lookup ensures that a device lost or compromised can be blocked at the switch port within seconds of a compliance change.
+
+## 4. Authorization Logic: Downloadable User Roles (DUR)
+To eliminate manual VLAN assignment on switches, the fabric utilizes Dynamic Enforcement via Downloadable User Roles (DUR).
+
+| Role Name | VLAN Assignment | Policy Enforcement Point (PEP) |
 | :--- | :--- | :--- |
-| **Virtualisation** | Proxmox and GNS3 | System-wide hypervisor and nested network orchestration. |
-| **Security Hub** | Palo Alto VM-Series | NVA, DHCP Server, Symmetric PBF, and VPN Tunnels. |
-| **Policy** | Aruba ClearPass | RADIUS/802.1X, DUR delivery, and Intune Extension. |
-| **Endpoint** | Microsoft Intune | SCEP/NDES lifecycle and Compliance Posture. |
-| **Edge** | Aruba AOS-CX | Policy Enforcement Point (PEP) for 802.1X and DUR. |
+| **EMP_SECURE** | VLAN 20 | Full access to corporate resources + L7 Inspection. |
+| **GUEST_IOT** | VLAN 30 | Internet-only access; isolated from Internal Backbone. |
+| **QUARANTINE** | VLAN 999 | Restricted to Remediation/Intune/DHCP/DNS only. |
+
+## 5. Security Profile Standards
+* **Enforcement:** All DURs fetched from ClearPass are signed with an HTTPS certificate to prevent role-tampering at the switch level.
+* **Accounting:** RADIUS Accounting is enabled on all AOS-CX ports to provide real-time visibility into session duration and bandwidth consumption for the SIEM node.
 
 ---
 
-### Detailed Engineering Pillars
-* [01. Infrastructure and PKI Hub](./01-infrastructure-core/)
-* [02. Transit Security and Routing Hub](./02-transit-security-hub-azure/)
-* [03. Identity Policy and Compliance Engine](./03-identity-policy-engine/)
+**Navigation**
+[Back to Identity Index](../README.md) | [Back to Main Architecture](../../README.md)
