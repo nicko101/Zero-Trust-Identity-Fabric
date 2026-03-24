@@ -1,55 +1,48 @@
-# Implementation Logic: Transit and Routing Architecture
+# Implementation Logic: Azure Transit Security Hub
 
-This section documents the configuration logic used to establish the Hybrid Transit Hub. It demonstrates how the environment bypasses single-tunnel bottlenecks to achieve enterprise-grade load balancing and symmetric split-routing.
+This directory documents the as-built configuration that executes the Dual-Tunnel Transit design. It details the specific Azure routing tables, load balancer configurations, and NVA traffic steering logic required to maintain stateful inspection.
 
 ---
 
-## 1. The Enterprise Transit Solution
-To eliminate the scaling limitations of terminating IPsec directly on an NVA, the cryptography is offloaded to the Azure VPN Gateway, and inner-IP traffic is load-balanced to the Palo Alto firewalls.
+## 1. Direct S2S Tunnel & Internet Breakout (Tunnel 1)
+The implementation utilizes a direct S2S IPsec tunnel terminating on the Palo Alto NVA for all internet-bound traffic originating from the on-premises Site 1.
 
-* **On-Premises Tunnels:**
-![On-Premises Tunnels](./images/onprem_tunnells.png)
-* **NVA Azure Tunnels:**
-![Azure Tunnels](./images/nva-tunnels.png)
-* **Internal Load Balancer (ILB):**
-![Azure ILB](./images/az_ilb_vip.png)
+* **Logic:** By terminating the tunnel directly on the NVA (via the External Load Balancer), we bypass the standard Azure Gateway for internet-bound traffic. This ensures the Palo Alto L7 engine has full visibility into outbound flows before they exit the Azure edge.
+* **Split Routing Proof:** Validation of the split tunnel architecture separating internet and backbone traffic.
+![Split Routing Proof](../validation-proof/images/proof_split_routing.png)
+* **Deep Dive:** [Palo Alto Azure Transit](../../docs/tech-notes/palo-azure-transit.md)
 
-## 2. Split-Routing and The Gateway Subnet Hack
-This architecture uses User-Defined Routes (UDRs) and the "Longest Prefix Match" rule to force-tunnel ingress traffic from the VPN Gateway through the NVA cluster.
+## 2. Ingress Steering & VPN Gateway UDR (Tunnel 2)
+To satisfy the requirement for 100% inspection of hybrid traffic, native Azure system routing is overridden at the gateway level.
 
-* **Gateway Routing Table (UDR):**
-![VPN Gateway RT](./images/rt-vpngw.png)
-* **Spoke Routing Table (UDR):**
-![Spoke RT](./images/rt-spoke-ilb.png)
-* **Route Table Logic (BGP):**
-![Route Table Spokes](./images/az-route-table-spokes.png)
-![Route Table VPNGW](./images/az-route-table-vpngw.png)
+* **Logic:** A User-Defined Route (UDR) is attached to the **GatewaySubnet**. This route table forces traffic arriving from the on-premises VPN Gateway to hit the NVA Trust interface before reaching the spokes.
+* **NVA Gateway Routing Proof:**
+![NVA Gateway UDR](../validation-proof/images/proof_split_routing_nva_gw_.png)
+* **VPN to Spoke Flow Logs:**
+![VPN Spoke Logs](../validation-proof/images/2303_logs_vpn_gw_spoke.png)
 
-## 3. Azure VNet Peering Fabric
-Specific peering relationships allow the Hub and Spokes to communicate strictly through the NVA inspection point.
+## 3. Spoke Egress & Traffic Steering
+Workload spokes are configured to recognize the Transit Hub as their primary security boundary.
 
-* **Gateway to NVA Peering:** ![Gateway to NVA](./images/azure_peering_vpng-nva.png)
-* **NVA to Spoke Peering:** ![NVA to Spoke](./images/azure_peering_nva-spoke.png)
-* **Peering to Spoke Evidence:** ![Peering Spoke](./images/peering-tospoke.png)
+* **Logic:** Subnet-level UDRs point the default route and inter-VNet routes to the Internal Load Balancer VIP. 
+* **Spoke Client Validation:**
+![Spoke Egress Proof](../validation-proof/images/proof_client_spokes.png)
 
-## 4. Symmetric Return via Policy-Based Forwarding (PBF)
-PBF ensures traffic returns symmetrically, preventing the stateful firewalls from dropping out-of-state packets.
+## 4. High Availability & Backbone BGP
+The hybrid backbone utilizes dynamic routing to share spoke address spaces while maintaining the isolated overlay for inspection.
 
-* **Trust VR:** ![Trust VR](./images/nva_vr_trust.png)
-* **Untrust VR:** ![Untrust VR](./images/nva-vr-untrust.png)
-* **PBF Rulebase:** ![PBF Rules](./images/nva_pbf.png)
+* **BGP Adjacency:** Validation of the BGP peering established over the VPN Gateway tunnel.
+![BGP Established](../validation-proof/images/palo-azure_vpngw_bgp.png)
+* **POC Architecture Architecture View:**
+![POC Split Routing](../validation-proof/images/proof_poc_split_routing.png)
 
-## 5. Security Services and Translation
-* **BGP Adjacency:**
-![BGP Status](./images/bgp_establishd.png)
-* **NAT Rulebase:**
-![NAT Rules](./images/nva-NAT.png)
-* **External Dynamic Lists (EDL):**
-![Palo EDL](./images/palo_EDL_out.png)
-* **Load Balancer Persistence:**
-![Session Persistence](./images/il_session_persisstence_none_traffic_lb.png)
+## 5. Security Policy Enforcement
+* **Logic:** The Palo Alto utilizes User-ID and Security Profiles to enforce the security mandate on all transit traffic.
+* **L7 Inspection Logs:**
+![Palo Alto Logs](../validation-proof/images/logs_onprem_pa-cppmvm1812.png)
+* **Deep Dive:** [Palo Alto Security Logic](../../docs/tech-notes/palo-alto-security.md)
 
 ---
 
 ## Navigation
-[Back to Main Architecture](../../README.md)
+[Back to Top](#implementation-logic-azure-transit-security-hub) | [Back to Transit Index](../README.md) | [Back to Main Architecture](../../README.md)

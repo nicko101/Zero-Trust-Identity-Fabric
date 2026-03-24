@@ -1,43 +1,43 @@
-# Design Standards: Transit Security Hub (Azure)
+# implementation logic: azure transit security hub
 
-## Table of Contents
-* [1. Azure IP Schema](#1-azure-ip-schema-172x0016)
-* [2. Dual-Tunnel Solution](#2-the-bypassed-tunnel-architectural-solution)
-* [3. Traffic Steering & Routing](#3-traffic-steering--routing-standards)
-* [4. Security Zone Definitions](#4-security-zone-definitions)
+this directory documents the as-built configuration that executes the dual-tunnel transit design. it details the specific azure routing tables, load balancer configurations, and nva traffic steering logic required to maintain stateful inspection.
 
 ---
 
-## 1. Azure IP Schema (172.x.0.0/16)
-| VNet | Purpose | CIDR |
-| :--- | :--- | :--- |
-| **nf-vnet-vpngw** | VPN Gateway Hub | 172.16.0.0/16 |
-| **nf-vnet-palo-nva** | Central Security Hub | 172.20.0.0/16 |
-| **nf-vnet-spoke** | Workload Spoke | 172.19.0.0/16 |
+## 1. direct s2s tunnel & internet breakout (tunnel 1)
+the implementation utilizes a direct s2s ipsec tunnel terminating on the palo alto nva for all internet-bound traffic originating from the on-premises site 1.
 
----
+* **logic:** by terminating the tunnel directly on the nva (via the external load balancer), we bypass the standard azure gateway for internet-bound traffic. this ensures the palo alto l7 engine has full visibility into outbound flows before they exit the azure edge.
+* **split routing proof:** validation of the split tunnel architecture separating internet and backbone traffic.
+![split routing proof](../validation-proof/images/proof_split_routing.png)
+* **deep dive:** [palo alto azure transit](../../docs/tech-notes/palo-azure-transit.md)
 
-## 2. The Bypassed-Tunnel Architectural Solution
-A **Validated Solution** for standalone NVA deployments to separate traffic types:
+## 2. ingress steering & vpn gateway udr (tunnel 2)
+to satisfy the requirement for 100% inspection of hybrid traffic, native azure system routing is overridden at the gateway level.
 
-* **Secure Internet Breakout (Tunnel 300):** On-Prem <-> Palo Alto NVA. Handles all `0.0.0.0/0` traffic for L7 Inspection and User-ID.
-* **Internal Backbone (Tunnel 200):** On-Prem <-> Azure VPN Gateway. Handles East-West traffic (AD, DNS) to reduce NVA load.
+* **logic:** a user-defined route (udr) is attached to the gatewaysubnet. this route table forces traffic arriving from the on-premises vpn gateway to hit the nva trust interface before reaching the spokes.
+* **nva gateway routing proof:**
+![nva gateway udr](../validation-proof/images/proof_split_routing_nva_gw_.png)
+* **vpn to spoke flow logs:**
+![vpn spoke logs](../validation-proof/images/2303_logs_vpn_gw_spoke.png)
 
----
+## 3. spoke egress & traffic steering
+workload spokes are configured to recognize the transit hub as their primary security boundary.
 
-## 3. Traffic Steering & Routing Standards
-* **UDRs:** Attached to `nf-vnet-spoke` pointing to the NVA Trust IP.
-* **Forced Tunneling:** All spoke internet traffic is backhauled through the NVA.
-* **Symmetric PBF:** Ensures return-path symmetry for stateful inspection.
+* **logic:** subnet-level udrs point the default route and inter-vnet routes to the internal load balancer vip. 
+* **spoke client validation:**
+![spoke egress proof](../validation-proof/images/proof_client_spokes.png)
 
----
+## 4. high availability & backbone bgp
+the hybrid backbone utilizes dynamic routing to share spoke address spaces while maintaining the isolated overlay for inspection.
 
-## 4. Security Zone Definitions
-* **Zone-Trust:** Azure Spoke & On-Prem internal.
-* **Zone-Untrust:** Internet egress.
-* **Zone-VPN:** GlobalProtect remote users.
+* **bgp adjacency:** validation of the bgp peering established over the vpn gateway tunnel.
+![bgp established](../validation-proof/images/palo-azure_vpngw_bgp.png)
+* **poc architecture view:**
+![poc split routing](../validation-proof/images/proof_poc_split_routing.png)
 
----
-
-**Navigation**
-[Back to Parent Category](../) | [Back to Main Architecture](../../README.md)
+## 5. security policy enforcement
+* **logic:** the palo alto utilizes user-id and security profiles to enforce the security mandate on all transit traffic.
+* **l7 inspection logs:**
+![palo alto logs](../validation-proof/images/logs_onprem_pa-cppmvm1812.png)
+* **deep dive:** [palo alto security logic](../../docs/tech-notes/palo-alto-security.md)
