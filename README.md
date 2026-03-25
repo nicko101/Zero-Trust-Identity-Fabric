@@ -1,12 +1,14 @@
 # Zero-Trust Identity Fabric
 ## Full-Stack Enterprise ZTNA and Hybrid Cloud Transit Hub
 
-![Blueprint](./diagrams/Automating%20Zero%20Trust%20Access%20Blueprint.png)
+![blueprint](./diagrams/blueprint.png)
 
 ---
 
 ## 1. Executive Summary: The Technical Flow
 This architecture demonstrates a production-hardened Hybrid Zero Trust environment. It orchestrates a high-fidelity handshake between on-premises infrastructure and Azure Cloud Services to enforce identity-based access across a distributed fabric.
+
+**Project Context:** This is a 100% greenfield environment engineered entirely from scratch. As a solo project, I was responsible for the end-to-end deployment of all physical/virtual network appliances (VyOS, Palo Alto, Aruba), the bare-metal Proxmox hypervisor, and the complete deployment of all core systems architecture, including Windows Server AD DS, DNS, Enterprise Certificate Authority (PKI/NDES), and the Microsoft Entra ID / Intune hybrid integrations.
 
 [View Advanced Engineering Analysis](./docs/engineering-analysis.md)
 
@@ -30,7 +32,7 @@ This architecture was designed to solve the inherent security and routing limita
 
 | Architectural Domain | Legacy Enterprise Network | Zero-Trust Identity Fabric |
 | :--- | :--- | :--- |
-| **Identity Context** | Static IP Address and VLAN | User, Device Health, and Dynamic Context |
+| **Identity Context** | Source IP Address and VLAN | User, Device Health, and Certificate |
 | **Trust Boundary** | Static Network Perimeter | Dynamic, Micro-Segmented Enclaves |
 | **Access Enforcement** | Static Allow/Deny ACLs | Dynamic User Roles (DUR) and TEAP Chaining |
 | **Routing and Traffic** | Asymmetric, Hub-and-Spoke | Symmetric Policy-Based Forwarding (PBF) |
@@ -39,38 +41,43 @@ This architecture was designed to solve the inherent security and routing limita
 ---
 
 ## 4. Key Technical Challenges Solved
-* **Active/Active Hybrid Transit and Centralized Internet Breakout**
-  * **The Challenge:** In enterprise environments where centralized security posture is a requirement, on-premises internet breakout traffic (egress) is often backhauled through the cloud security hub for inspection. However, terminating hybrid IPsec tunnels directly on a pair of NVAs behind a load balancer typically forces an Active/Passive state. This creates a scalability bottleneck that restricts total throughput and prevents the efficient use of expensive NVA compute for both lateral transit and high-performance centralized egress inspection.
-  * **The Solution:** Decoupled the decryption layer by terminating IPsec tunnels on the native Azure VPN Gateway. The gateway routes decrypted traffic to an Internal Load Balancer (ILB) VIP, allowing both Palo Alto NVAs to operate in a true Active/Active state. This ensures that both hybrid datacenter traffic and mandated centralized internet breakout traffic are distributed across all available NVA compute, maximizing security throughput and hardware ROI.
 
-* **Symmetric Routing and Split-Tunnels**
+* ### [Active/Active Hybrid Transit and Centralized Internet Breakout](./docs/tech-notes/palo-azure-transit.md)
+  * **The Challenge:** In enterprise environments where centralized security posture is a requirement, on-premises internet breakout traffic (egress) is often backhauled through the cloud security hub for inspection. However, terminating hybrid IPsec tunnels directly on a pair of NVAs behind a load balancer typically forces an Active/Passive state. This creates a scalability bottleneck that restricts total throughput and prevents the efficient use of expensive NVA compute.
+  * **The Solution:** Decoupled the decryption layer by terminating IPsec tunnels on the native Azure VPN Gateway. The gateway routes decrypted traffic to an Internal Load Balancer (ILB) VIP, allowing both Palo Alto NVAs to operate in a true Active/Active state. This ensures hardware ROI while maintaining high-performance centralized egress inspection.
+
+* ### [Symmetric Routing and Split-Tunnels](./docs/tech-notes/palo-azure-transit.md)
   Solved asymmetric routing challenges for dual IPsec tunnels. Engineered Policy-Based Forwarding (PBF) to ensure return traffic is pinned to the correct stateful firewall.
 
-* **Hybrid 802.1X Identity Flow**
-  Orchestrated the secure routing of on-premises RADIUS/TEAP traffic to a cloud-resident ClearPass policy engine.
+* ### [Hybrid 802.1X and the ClearPass Intune Extension](./docs/tech-notes/8021x-clearpass-cx.md)
+  * **The Challenge:** Traditional 802.1X only validates user credentials, ignoring the health and compliance of the connecting hardware.
+  * **The Solution:** Orchestrated the secure routing of on-premises RADIUS traffic to a cloud-resident ClearPass policy engine. By leveraging the **ClearPass Intune Extension**, the system performs real-time API lookups to Microsoft Intune, ensuring only managed and compliant devices gain access to the secure internal fabric.
 
-* **Outbound-Only Certificate Retrieval**
-  Utilized Entra App Proxy for internal SCEP/NDES retrieval, entirely eliminating the need to open vulnerable inbound firewall ports.
+* ### [Outbound-Only Certificate Retrieval (Intune Connector)](./docs/tech-notes/pki-scep-lifecycle.md)
+  * **The Challenge:** Providing on-premises certificates to managed devices usually requires opening inbound firewall ports (80/443) to a SCEP/NDES server, creating a significant security risk.
+  * **The Solution:** Leveraged the **Microsoft Intune Certificate Connector** in conjunction with **Entra App Proxy**. This creates a secure, outbound-only communication channel where Intune proxies certificate requests to the internal NDES server without requiring any inbound firewall exceptions.
 
 ---
 
 ## 5. Prerequisites and Environment Baseline
 To fully replicate this environment using the provided infrastructure-as-code and configuration artifacts, the following baseline is required:
 
-* **Cloud Infrastructure:** A Microsoft Azure Subscription with permissions to provision Virtual Network Gateways, Standard Load Balancers, and compute resources.
-* **Identity and Access:** A Microsoft Entra ID tenant (P1/P2 recommended for Entra Private Network Connector support) and an active Intune MDM environment.
-* **On-Premises Hypervisor:** A bare-metal host running Proxmox VE to simulate the on-premises datacenter, host the VyOS edge router, and manage local switching.
-* **Appliance Licensing:** * Palo Alto VM-Series (PAN-OS) evaluation licenses (for both Azure Transit NVAs and the on-premises edge).
-  * Aruba ClearPass Policy Manager (CPPM) VM images and evaluation licenses.
+* **Cloud Infrastructure:** A Microsoft Azure Subscription with permissions for Virtual Network Gateways and Standard Load Balancers.
+* **Identity and Access:** A Microsoft Entra ID tenant (P1/P2) and an active Intune MDM environment with the **Microsoft Intune Certificate Connector** installed.
+* **Identity Policy Engine:** Aruba ClearPass Policy Manager (CPPM) with the **ClearPass Intune Extension** configured for device telemetry.
+* **On-Premises Infrastructure:** Proxmox Hypervisor: 1 Bare Metal host running the entire infrastructure (SDDC).
+* **Physical Hardware:** 1 Aruba Instant Access Point (IAP) for wireless edge termination.
+* **Appliance Licensing:** This project utilizes **Evaluation Licenses** for all Palo Alto VM-Series (PAN-OS), Aruba ClearPass, and Microsoft server components.
 
 ---
 
-## 6. Reproducibility and Environment Artifacts
-This repository is designed for full environmental audit and reproducibility. All core configuration files are centralized in the **[Artifacts Folder](./artifacts/)**.
+## 6. Reproducibility and Environment Authoring
+Every technical artifact in this repository was custom-engineered to function within this unified fabric. The **[Artifacts Folder](./artifacts/)** serves as a centralized source of truth for the complete environment state:
 
-* **Azure IaC:** JSON ARM templates for the Transit Hub and NVA HA Cluster.
-* **Security Policy:** Palo Alto XML configuration exports.
-* **Network State:** Aruba AOS-CX CLI configurations and ClearPass service exports.
+* **Custom Cloud IaC:** Azure ARM JSON templates for the Transit Hub, NVA HA Clusters, and UDR logic.
+* **Security Policy Engineering:** Full Palo Alto XML configuration exports and security policy sets.
+* **Network Infrastructure State:** Aruba AOS-CX CLI configuration files and VyOS edge routing logic.
+* **Server Infrastructure:** Windows Server configuration for Active Directory DS, NDES, and SCEP certificate services.
 
 ---
 
@@ -94,8 +101,8 @@ This repository is designed for full environmental audit and reproducibility. Al
 
 Validation evidence and configuration exports for this service are centralized in the module-level hub.
 
-## Navigation
 * [Access Validation-Proof Hub](./artifacts/)
+* [Technical Deep-Dives Hub](./docs/)
 * [Back to Parent Category](../)
 * [Back to Main Lab Architecture](./)
 * [Back to Top](#zero-trust-identity-fabric)
