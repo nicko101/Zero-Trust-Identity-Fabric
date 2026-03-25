@@ -13,30 +13,34 @@ This architecture demonstrates a production-hardened **Hybrid Zero Trust** envir
 ---
 
 ## 2. Key Technical Challenges Solved
-This project goes beyond standard documentation to solve specific enterprise-grade constraints:
-
-* **NVA Split-Tunnel Routing:** Implementation of specific routing restrictions and Symmetric PBF to manage traffic across dual IPsec tunnels (Backbone vs. Security Breakout), preventing asymmetric routing issues common in NVA deployments.
-* **Outbound-Only Cert Retrieval:** Utilizes the **Entra Private Network Connector (App Proxy)** to facilitate internal SCEP/NDES certificate retrieval. This allows Intune to issue identity certs to on-prem devices without requiring inbound firewall holes.
-* **Hybrid-to-Cloud Migration Path:** Leverages the **Intune Extension** to bridge the gap between legacy Active Directory and modern Cloud Management, automating the migration of identity trust from the local domain to the Entra ID fabric.
-* **Dynamic NAC Orchestration:** Integration of **Aruba ClearPass** and **AOS-CX** to fetch Downloadable User Roles (DUR) over HTTPS, ensuring that security policies are applied at the hardware edge based on real-time compliance data.
+* **NVA High Availability & Resilience:** Implementation of a "Load Balancer Sandwich" in Azure (External and Internal Standard Load Balancers) to front the **Palo Alto VM-Series** cluster.
+* **Hybrid 802.1X Identity Flow:** Orchestrates the routing of on-premises RADIUS/TEAP traffic through the S2S tunnel to a cloud-resident **ClearPass VM (CPPM3)**.
+* **NVA Split-Tunnel Routing:** Management of dual IPsec tunnels (Backbone vs. Security Breakout) using Symmetric PBF.
+* **Outbound-Only Cert Retrieval:** Utilises **Entra Private Network Connector (App Proxy)** for internal SCEP/NDES retrieval without inbound firewall holes.
 
 ---
 
-## 3. Core Architectural Pillars
+## 3. Repository Structure (TOC)
+This repository is organised into modular engineering phases:
 
-### Cloud & Hybrid Identity
-* **Microsoft Entra ID:** Live tenant configuration and Enterprise App integrations.
-* **Microsoft Intune:** MDM enrollment and automated SCEP profile distribution.
-* **Hybrid Identity:** Entra Connect synchronization and App Proxy for secure internal resource publishing.
-
-### Network Security & NAC
-* **Palo Alto Networks (VM-Series):** Active/Passive HA cluster enforcing App-ID and User-ID.
-* **Aruba ClearPass (CPPM):** Policy Decision Point (PDP) managing the full RADIUS/TACACS+ lifecycle.
-* **Observability Node:** Dedicated Linux node for **Syslog** aggregation and **SNMP** device profiling.
+* **[01-infrastructure-core](./01-infrastructure-core/):** Physical and virtualised baseline. Includes Proxmox hypervisor networking, VyOS edge logic, and on-premises firewalling.
+* **[02-transit-security-hub-azure](./02-transit-security-hub-azure/):** The cloud security edge. Contains the Azure Transit VNet, NVA HA Load Balancers, and Gateway UDR steering logic.
+* **[03-identity-policy-engine](./03-identity-policy-engine/):** The Zero Trust brain. Documents ClearPass (CPPM) services, TEAP/EAP-TLS authentication methods, and Intune/Entra ID integration.
+* **[artifacts](./artifacts/):** Centralised backup of all raw configuration files (Azure ARM JSON, Palo Alto XML, and AOS-CX TXT).
+* **[docs](./docs/):** Technical deep dives, engineering analysis, and SIEM/SecOps observability documentation.
 
 ---
 
-## 4. Detailed Engineering Deep-Dives
+## 4. Reproducibility & Environment Artifacts
+This repository is designed for full environmental audit and reproducibility. All core configuration files are centralised in the [Artifacts Folder](./artifacts/).
+
+* **Azure IaC:** JSON ARM templates for the Transit Hub and NVA HA Cluster.
+* **Security Policy:** Palo Alto XML configuration exports.
+* **Network State:** Aruba AOS-CX CLI configurations and ClearPass service exports.
+
+---
+
+## 5. Detailed Engineering Deep-Dives
 * [Proxmox Networking & VyOS NAT Logic](./docs/tech-notes/proxmox-networking.md)
 * [PKI Lifecycle: SCEP, NDES, and Intune](./docs/tech-notes/pki-scep-lifecycle.md)
 * [Hybrid Transit: Palo Alto to Azure S2S](./docs/tech-notes/palo-azure-transit.md)
@@ -46,5 +50,5 @@ This project goes beyond standard documentation to solve specific enterprise-gra
 * [Entra App Proxy for NDES](./docs/tech-notes/entra-app-proxy.md)
 * [ArubaOS-CX Switching & Port Access](./docs/tech-notes/aruba-cx-switching.md)
 * [ClearPass Advanced Services](./docs/tech-notes/clearpass-advanced-services.md)
-* [SIEM & SecOps: Centralized Logging](./docs/tech-notes/secops-siem-observability.md)
-* [Offensive Validation & Pentesting](./docs/tech-notes/pentesting-offensive-validation.md)N
+* [SIEM & SecOps: Centralised Logging](./docs/tech-notes/secops-siem-observability.md)
+* [Offensive Validation & Pentesting](./docs/tech-notes/pentesting-offensive-validation.md)
