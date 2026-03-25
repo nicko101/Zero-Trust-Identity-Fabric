@@ -26,6 +26,8 @@ This repository is organized into modular engineering phases:
 ## 3. Breaking the Perimeter Paradox
 This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. The comparison below outlines the core engineering shifts implemented in this fabric.
 
+![Legacy vs Zero Trust](./diagrams/legacy_vs_ZT.png)
+
 | Architectural Domain | Legacy Enterprise Network | Zero-Trust Identity Fabric |
 | :--- | :--- | :--- |
 | **Identity Context** | Static IP Address and VLAN | User, Device Health, and Dynamic Context |
@@ -34,15 +36,12 @@ This architecture was designed to solve the inherent security and routing limita
 | **Routing and Traffic** | Asymmetric, Hub-and-Spoke | Symmetric Policy-Based Forwarding (PBF) |
 | **Hybrid Scaling** | IPsec on Firewall (Active/Passive bottleneck) | IPsec on Azure Gateway (Active/Active ILB) |
 
-> Visual Reference:
-> ![Legacy vs Zero Trust](./diagrams/legacy_vs_ZT.png)
-
 ---
 
 ## 4. Key Technical Challenges Solved
-* **Active/Active Hybrid Transit Architecture**
-  * **The Challenge:** Terminating hybrid IPsec tunnels directly on a standalone pair of NVAs behind a load balancer forces an Active/Passive state. To maintain tunnel stability, one NVA must be restricted and removed from the load balancing pool via health probe manipulation, leaving expensive firewall compute idle.
-  * **The Solution:** Decoupled the decryption layer by terminating the tunnel on the native Azure VPN Gateway. The gateway routes the decrypted traffic directly to an Internal Load Balancer (ILB) VIP. This allows the load balancer to function normally, distributing hybrid traffic across both Palo Alto NVAs for true Active/Active inspection.
+* **Active/Active Hybrid Transit and Centralized Internet Breakout**
+  * **The Challenge:** In enterprise environments where centralized security posture is a requirement, on-premises internet breakout traffic (egress) is often backhauled through the cloud security hub for inspection. However, terminating hybrid IPsec tunnels directly on a pair of NVAs behind a load balancer typically forces an Active/Passive state. This creates a scalability bottleneck that restricts total throughput and prevents the efficient use of expensive NVA compute for both lateral transit and high-performance centralized egress inspection.
+  * **The Solution:** Decoupled the decryption layer by terminating IPsec tunnels on the native Azure VPN Gateway. The gateway routes decrypted traffic to an Internal Load Balancer (ILB) VIP, allowing both Palo Alto NVAs to operate in a true Active/Active state. This ensures that both hybrid datacenter traffic and mandated centralized internet breakout traffic are distributed across all available NVA compute, maximizing security throughput and hardware ROI.
 
 * **Symmetric Routing and Split-Tunnels**
   Solved asymmetric routing challenges for dual IPsec tunnels. Engineered Policy-Based Forwarding (PBF) to ensure return traffic is pinned to the correct stateful firewall.
@@ -87,3 +86,16 @@ This repository is designed for full environmental audit and reproducibility. Al
 * [ClearPass Advanced Services](./docs/tech-notes/clearpass-advanced-services.md)
 * [SIEM and SecOps: Centralized Logging](./docs/tech-notes/secops-siem-observability.md)
 * [Offensive Validation and Pentesting](./docs/tech-notes/pentesting-offensive-validation.md)
+
+---
+
+## Cloud Networking
+## Evidence & Audit
+
+Validation evidence and configuration exports for this service are centralized in the module-level hub.
+
+## Navigation
+* [Access Validation-Proof Hub](./artifacts/)
+* [Back to Parent Category](../)
+* [Back to Main Lab Architecture](./)
+* [Back to Top](#zero-trust-identity-fabric)
