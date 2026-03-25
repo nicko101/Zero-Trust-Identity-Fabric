@@ -66,14 +66,16 @@ To fully replicate this environment using the provided infrastructure-as-code an
 * **Cloud Infrastructure:** A Microsoft Azure Subscription.
 * **Identity and Access:** A Microsoft Entra ID tenant (P1/P2) and an active Intune MDM environment.
 * **Identity Policy Engine:** Aruba ClearPass Policy Manager (CPPM).
-* **On-Premises Infrastructure:** Proxmox Hypervisor (Bare Metal SDDC).
-* **Physical Hardware:** Aruba AOS-CX Switching and Instant Access Point (IAP).
+* **On-Premises Infrastructure:** Proxmox Hypervisor: 1 Bare Metal host running the entire infrastructure (SDDC).
+* **Physical Hardware:** 1 Aruba Instant Access Point (IAP) for wireless edge termination and Aruba AOS-CX Switching.
 * **Appliance Licensing:** Evaluation Licenses for Palo Alto VM-Series (PAN-OS), Aruba ClearPass, and Microsoft Server components.
 
 ---
 
 ## 6. Reproducibility and Environment Authoring
-Every technical artifact in this repository was custom-engineered to function within this unified fabric. The **[Artifacts Folder](./artifacts/)** serves as a centralized source of truth for the complete environment state:
+Every technical artifact in this repository was custom-engineered to function within this unified fabric. 
+
+The **[Artifacts Folder](./artifacts/)** serves as a centralized source of truth for the complete environment state:
 
 * **Custom Cloud IaC:** Azure ARM JSON templates for the Transit Hub.
 * **Security Policy Engineering:** Full Palo Alto XML configuration exports.
