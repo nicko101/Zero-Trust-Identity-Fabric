@@ -1,7 +1,7 @@
 # Zero-Trust Identity Fabric
 ## Full-Stack Enterprise ZTNA and Hybrid Cloud Transit Hub
 
-![Hero Image](./diagrams/Automating%20Zero%20Trust%20Access%20Blueprint.png)
+![Blueprint](./diagrams/Automating%20Zero%20Trust%20Access%20Blueprint.png)
 
 ---
 
@@ -12,23 +12,34 @@ This architecture demonstrates a production-hardened Hybrid Zero Trust environme
 
 ---
 
-## 2. Breaking the Perimeter Paradox
+## 2. Repository Structure
+This repository is organized into modular engineering phases:
+
+* **[01-infrastructure-core](./01-infrastructure-core/):** Physical and virtualized baseline. Includes Proxmox hypervisor networking, VyOS edge logic, and on-premises firewalling.
+* **[02-transit-security-hub-azure](./02-transit-security-hub-azure/):** The cloud security edge. Contains the Azure Transit VNet, NVA HA Load Balancers, and Gateway UDR steering logic.
+* **[03-identity-policy-engine](./03-identity-policy-engine/):** The Zero Trust brain. Documents ClearPass (CPPM) services, TEAP/EAP-TLS authentication methods, and Intune/Entra ID integration.
+* **[artifacts](./artifacts/):** Centralized backup of all raw configuration files (Azure ARM JSON, Palo Alto XML, and AOS-CX TXT).
+* **[docs](./docs/):** Technical deep dives, engineering analysis, and SIEM/SecOps observability documentation.
+
+---
+
+## 3. Breaking the Perimeter Paradox
 This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. The comparison below outlines the core engineering shifts implemented in this fabric.
 
 | Architectural Domain | Legacy Enterprise Network | Zero-Trust Identity Fabric |
 | :--- | :--- | :--- |
-| **Identity Context** | Static IP Address & VLAN | User, Device Health, and Dynamic Context |
+| **Identity Context** | Static IP Address and VLAN | User, Device Health, and Dynamic Context |
 | **Trust Boundary** | Static Network Perimeter | Dynamic, Micro-Segmented Enclaves |
-| **Access Enforcement** | Static Allow/Deny ACLs | Dynamic User Roles (DUR) & TEAP Chaining |
-| **Routing & Traffic** | Asymmetric, Hub-and-Spoke | Symmetric Policy-Based Forwarding (PBF) |
+| **Access Enforcement** | Static Allow/Deny ACLs | Dynamic User Roles (DUR) and TEAP Chaining |
+| **Routing and Traffic** | Asymmetric, Hub-and-Spoke | Symmetric Policy-Based Forwarding (PBF) |
 | **Hybrid Scaling** | IPsec on Firewall (Active/Passive bottleneck) | IPsec on Azure Gateway (Active/Active ILB) |
 
-> **Visual Reference:**
+> Visual Reference:
 > ![Legacy vs Zero Trust](./diagrams/legacy_vs_ZT.png)
 
 ---
 
-## 3. Key Technical Challenges Solved
+## 4. Key Technical Challenges Solved
 * **Active/Active Hybrid Transit Architecture**
   * **The Challenge:** Terminating hybrid IPsec tunnels directly on a standalone pair of NVAs behind a load balancer forces an Active/Passive state. To maintain tunnel stability, one NVA must be restricted and removed from the load balancing pool via health probe manipulation, leaving expensive firewall compute idle.
   * **The Solution:** Decoupled the decryption layer by terminating the tunnel on the native Azure VPN Gateway. The gateway routes the decrypted traffic directly to an Internal Load Balancer (ILB) VIP. This allows the load balancer to function normally, distributing hybrid traffic across both Palo Alto NVAs for true Active/Active inspection.
@@ -44,7 +55,7 @@ This architecture was designed to solve the inherent security and routing limita
 
 ---
 
-## 4. Prerequisites and Environment Baseline
+## 5. Prerequisites and Environment Baseline
 To fully replicate this environment using the provided infrastructure-as-code and configuration artifacts, the following baseline is required:
 
 * **Cloud Infrastructure:** A Microsoft Azure Subscription with permissions to provision Virtual Network Gateways, Standard Load Balancers, and compute resources.
@@ -52,17 +63,6 @@ To fully replicate this environment using the provided infrastructure-as-code an
 * **On-Premises Hypervisor:** A bare-metal host running Proxmox VE to simulate the on-premises datacenter, host the VyOS edge router, and manage local switching.
 * **Appliance Licensing:** * Palo Alto VM-Series (PAN-OS) evaluation licenses (for both Azure Transit NVAs and the on-premises edge).
   * Aruba ClearPass Policy Manager (CPPM) VM images and evaluation licenses.
-
----
-
-## 5. Repository Structure (TOC)
-This repository is organized into modular engineering phases:
-
-* **[01-infrastructure-core](./01-infrastructure-core/):** Physical and virtualized baseline. Includes Proxmox hypervisor networking, VyOS edge logic, and on-premises firewalling.
-* **[02-transit-security-hub-azure](./02-transit-security-hub-azure/):** The cloud security edge. Contains the Azure Transit VNet, NVA HA Load Balancers, and Gateway UDR steering logic.
-* **[03-identity-policy-engine](./03-identity-policy-engine/):** The Zero Trust brain. Documents ClearPass (CPPM) services, TEAP/EAP-TLS authentication methods, and Intune/Entra ID integration.
-* **[artifacts](./artifacts/):** Centralized backup of all raw configuration files (Azure ARM JSON, Palo Alto XML, and AOS-CX TXT).
-* **[docs](./docs/):** Technical deep dives, engineering analysis, and SIEM/SecOps observability documentation.
 
 ---
 
@@ -87,14 +87,3 @@ This repository is designed for full environmental audit and reproducibility. Al
 * [ClearPass Advanced Services](./docs/tech-notes/clearpass-advanced-services.md)
 * [SIEM and SecOps: Centralized Logging](./docs/tech-notes/secops-siem-observability.md)
 * [Offensive Validation and Pentesting](./docs/tech-notes/pentesting-offensive-validation.md)
-
----
-
-## Cloud Networking
-## Evidence & Audit
-Validation evidence and configuration exports for this service are centralized in the module-level hub.
-
-* [Access Validation-Proof Hub](./artifacts/)
-* [Back to Parent Category](../)
-* [Back to Main Lab Architecture](./)
-* [Back to Top](#zero-trust-identity-fabric)
