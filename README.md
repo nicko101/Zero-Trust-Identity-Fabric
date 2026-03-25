@@ -28,7 +28,7 @@ This repository is organized into modular engineering phases:
 ## 3. Breaking the Perimeter Paradox
 This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. The comparison below outlines the core engineering shifts implemented in this fabric.
 
-![Legacy vs Zero Trust](./diagrams/legacy_vs_ZT.jpg)
+![Legacy vs Zero Trust](./diagrams/legacy_vs_ZT.png)
 
 | Architectural Domain | Legacy Enterprise Network | Zero-Trust Identity Fabric |
 | :--- | :--- | :--- |
@@ -97,7 +97,8 @@ Every technical artifact in this repository was custom-engineered to function wi
 
 ---
 
-## Cloud Networking
-## Evidence & Audit
-
-Validation evidence and configuration exports for this service are centralized in the module-level hub.
+* [Access Validation-Proof Hub](./artifacts/)
+* [Technical Deep-Dives Hub](./docs/)
+* [Back to Parent Category](../)
+* [Back to Main Lab Architecture](./)
+* [Back to Top](#zero-trust-identity-fabric)
