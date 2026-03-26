@@ -28,7 +28,7 @@ This repository is organized into modular engineering phases:
 ## 3. Breaking the Perimeter Paradox
 This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. The comparison below outlines the core engineering shifts implemented in this fabric.
 
-![Legacy vs Zero Trust](./diagrams/5_overview.png.png)
+![Legacy vs Zero Trust](./diagrams/5_overview.png)
 
 | Architectural Domain | Legacy Enterprise Network | Zero-Trust Identity Fabric |
 | :--- | :--- | :--- |
