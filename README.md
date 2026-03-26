@@ -28,7 +28,7 @@ This repository is organized into modular engineering phases:
 ## 3. Breaking the Perimeter Paradox
 This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. The comparison below outlines the core engineering shifts implemented in this fabric.
 
-![Legacy vs Zero Trust](./diagrams/legacy_vs_ZT.png)
+![Legacy vs Zero Trust](./diagrams/5_overview.png.png)
 
 | Architectural Domain | Legacy Enterprise Network | Zero-Trust Identity Fabric |
 | :--- | :--- | :--- |
@@ -50,9 +50,9 @@ This architecture was designed to solve the inherent security and routing limita
   * **The Challenge:** Statically configuring access control lists (ACLs) and VLANs on every edge switch port creates massive administrative overhead and violates Zero Trust principles.
   * **The Solution:** Eliminated static VLANs and ACLs at the edge. Upon successful 802.1X/TEAP authentication, Aruba AOS-CX switches dynamically download and enforce the exact firewall policies and roles directly from ClearPass.
 
-* ### [Active/Active Hybrid Transit and Centralized Internet Breakout](./docs/tech-notes/palo-azure-transit.md)
-  * **The Challenge:** Eliminating the Active/Passive firewall bottleneck caused by terminating IPsec tunnels directly on NVAs behind a load balancer.
-  * **The Solution:** Decoupled the IPsec decryption layer to a native Azure VPN Gateway. By routing decrypted spoke and on-premises traffic through an Internal Load Balancer (ILB), achieved true Active/Active inspection across multiple Palo Alto NVAs—ensuring high-throughput transit and centralized egress security.
+* ### [Active/Active Hybrid Transit and Path Isolation](./docs/tech-notes/palo-azure-transit.md)
+  * **The Challenge:** Eliminating NVA "pinning." Terminating all hybrid traffic on a single tunnel forces a single appliance to handle all encrypted flows, preventing horizontal scaling and symmetric load balancing across the cluster.
+  * **The Solution:** Engineered a Dual-Path Transit strategy using tunnel-state isolation. On-premises **Internet-bound traffic** is routed via a direct tunnel (Tunnel 300) to the NVA; by keeping this path disconnected from the Spokes, it bypasses the ILB for egress to avoid asymmetry. Conversely, **Internal Spoke-bound traffic** is routed via the VPN Gateway (Tunnel 200). This "normalizes" the traffic by decoupling decryption from inspection, allowing the **Internal Load Balancer (ILB) VIP** to distribute clear flows symmetrically across all active Palo Alto NVAs.
 
 * ### [Outbound-Only Certificate Retrieval](./docs/tech-notes/pki-scep-lifecycle.md)
   * **The Challenge:** Legacy connections for certificate retrieval require opening inbound firewall ports (80/443) to a SCEP/NDES server, creating a significant security risk.
