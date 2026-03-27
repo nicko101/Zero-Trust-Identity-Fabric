@@ -26,49 +26,44 @@ This repository is organized into modular engineering phases:
 ---
 
 ## 3. Breaking the Perimeter Paradox
-This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. The comparison below outlines the core engineering shifts implemented in this fabric.
+This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. Shifting the architecture away from legacy static perimeters, this fabric leverages dynamic, micro-segmented enclaves.
 
-![Legacy vs Zero Trust](./diagrams/5_overview.png)
-
-| Architectural Domain | Legacy Enterprise Network | Zero-Trust Identity Fabric |
-| :--- | :--- | :--- |
-| **Network Access** | Static IP Address & VLAN | User, Device Health, & Context |
-| **Trust Boundary** | Static Network Perimeter | Dynamic, Micro-Segmented Enclaves |
-| **Access Enforcement** | Static Allow/Deny ACLs | Dynamic User Roles (DUR) |
-| **Routing and Traffic** | Asymmetric Hub-and-Spoke | Symmetric Policy-Based Forwarding |
-| **Certificate Retrieval** | Inbound Ports to SCEP/NDES | Outbound via Entra App Proxy |
+![Architecture Overview](./diagrams/5_overview.png)
 
 ---
 
 ## 4. Key Technical Challenges Solved
 
 * ### [Cloud-Native Device Authorization (ClearPass Intune Extension)](./docs/tech-notes/8021x-clearpass-cx.md)
-  * **The Challenge:** As endpoints migrate to Entra ID (Cloud-Only), they no longer exist within the on-premises Active Directory. This renders legacy Domain Controllers incapable of acting as the Identity Authority for machine-level authentication.
+  * **The Challenge:** As endpoints migrate to Entra ID (Cloud-Only), they no longer exist within on-premises Active Directory, rendering legacy Domain Controllers incapable of acting as the Identity Authority for machine-level authentication.
   * **The Solution:** Orchestrated a solution using the ClearPass Intune Extension as the real-time authorization source. This allows ClearPass to query Intune via real-time API lookups to confirm both device identity and compliance state before granting access.
 
 * ### [Dynamic Micro-Segmentation & Downloadable User Roles (DUR)](./docs/tech-notes/8021x-clearpass-cx.md)
   * **The Challenge:** Statically configuring access control lists (ACLs) and VLANs on every edge switch port creates massive administrative overhead and violates Zero Trust principles.
-  * **The Solution:** Eliminated static VLANs and ACLs at the edge. Upon successful 802.1X/TEAP authentication, Aruba AOS-CX switches dynamically download and enforce the exact firewall policies and roles directly from ClearPass.
+  * **The Solution:** Eliminated static VLANs and ACLs at the edge. Upon successful 802.1X/TEAP authentication, Aruba AOS-CX switches dynamically download and enforce granular roles directly from ClearPass.
+
+* ### [Inspected Hybrid Identity Flow (Hybrid RADIUS/PEAP)](./docs/tech-notes/clearpass-azure-radius.md)
+  * **The Challenge:** Securing the identity plane itself. Standard hybrid authentication often treats the RADIUS path as "pre-trusted" traffic, bypassing the security stack.
+  * **The Solution:** Deployed a standalone ClearPass Publisher as an Azure Spoke-resident NVA, functioning independently from the on-premises CPPM cluster. On-premises AOS-CX switches and wireless IAPs perform RADIUS/PEAP authentication via a VPN Gateway tunnel, with all identity traffic steered through the Palo Alto NVA cluster for deep packet inspection (DPI) before reaching the Azure appliance.
 
 * ### [Active/Active Hybrid Transit and Path Isolation](./docs/tech-notes/palo-azure-transit.md)
   * **The Challenge:** Eliminating NVA "pinning." Terminating all hybrid traffic on a single tunnel forces a single appliance to handle all encrypted flows, preventing horizontal scaling and symmetric load balancing across the cluster.
-  * **The Solution:** Engineered a Dual-Path Transit strategy using tunnel-state isolation. On-premises **Internet-bound traffic** is routed via a direct tunnel (Tunnel 300) to the NVA; by keeping this path disconnected from the Spokes, it bypasses the ILB for egress to avoid asymmetry. Conversely, **Internal Spoke-bound traffic** is routed via the VPN Gateway (Tunnel 200). This "normalizes" the traffic by decoupling decryption from inspection, allowing the **Internal Load Balancer (ILB) VIP** to distribute clear flows symmetrically across all active Palo Alto NVAs.
+  * **The Solution:** Engineered a Dual-Path Transit strategy. On-premises **Internet-bound traffic** is routed via a direct tunnel (Tunnel 300) to the NVA; by keeping this path disconnected from the Spokes, it bypasses the ILB for egress to avoid asymmetry. Conversely, **Internal Spoke-bound traffic** is routed via the VPN Gateway (Tunnel 200). This "normalizes" the traffic by decoupling decryption from inspection, allowing the **Internal Load Balancer (ILB) VIP** to distribute clear flows symmetrically across all active Palo Alto NVAs.
 
-* ### [Outbound-Only Certificate Retrieval](./docs/tech-notes/pki-scep-lifecycle.md)
+* ### [Outbound-Only Certificate Retrieval (Entra App Proxy)](./docs/tech-notes/pki-scep-lifecycle.md)
   * **The Challenge:** Legacy connections for certificate retrieval require opening inbound firewall ports (80/443) to a SCEP/NDES server, creating a significant security risk.
-  * **The Solution:** Eliminated the need for inbound firewall ports by leveraging Entra App Proxy for secure, outbound-only SCEP/NDES certificate retrieval via the Microsoft Intune Certificate Connector.
+  * **The Solution:** Eliminated risky inbound firewall ports by leveraging Entra App Proxy and the Microsoft Intune Certificate Connector for secure, outbound-only SCEP/NDES polling.
 
 ---
 
 ## 5. Prerequisites and Environment Baseline
 To fully replicate this environment using the provided infrastructure-as-code and configuration artifacts, the following baseline is required:
 
-* **Cloud Infrastructure:** A Microsoft Azure Subscription.
+* **Cloud Infrastructure (Azure):** Hosting the **Active/Active Palo Alto VM-Series NVA Cluster** and a standalone **Aruba ClearPass Publisher NVA**.
 * **Identity and Access:** A Microsoft Entra ID tenant (P1/P2) and an active Intune MDM environment.
-* **Identity Policy Engine:** Aruba ClearPass Policy Manager (CPPM).
-* **On-Premises Infrastructure:** Proxmox Hypervisor: 1 Bare Metal host running the entire infrastructure (SDDC).
-* **Physical Hardware:** 1 Aruba Instant Access Point (IAP) for wireless edge termination and Aruba AOS-CX Switching.
-* **Appliance Licensing:** Evaluation Licenses for Palo Alto VM-Series (PAN-OS), Aruba ClearPass, and Microsoft Server components.
+* **On-Premises Infrastructure (Proxmox VE):** Bare-metal host running a dedicated **Active/Passive Palo Alto HA pair**, **Windows Server (AD DS/PKI)**, a dedicated on-premises **ClearPass Publisher/Subscriber cluster**, and the **Aruba AOS-CX Virtual Switching** suite.
+* **Physical Hardware:** 1 Aruba Instant Access Point (IAP) for wireless edge termination.
+* **Appliance Licensing:** Evaluation Licenses for Palo Alto PAN-OS, Aruba ClearPass, and Microsoft Server components.
 
 ---
 
