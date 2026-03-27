@@ -49,21 +49,21 @@ Together, these components form a **fully integrated Zero Trust access model**.
 
 ## Core Challenges Solved
 
-### Cloud-Native Device Authorization  
+### Cloud-Native Device Authorization ([ClearPass Intune Extension](./03-identity-policy-engine/))  
 Traditional AD cannot validate cloud-only devices.
 
-→ ClearPass integrates with Intune to validate identity and compliance in real time.
+→ ClearPass integrates with Intune via the Intune Extension to validate identity and compliance in real time.
 
 ---
 
-### Dynamic Micro-Segmentation  
+### Dynamic Micro-Segmentation ([Aruba DUR](./03-identity-policy-engine/))  
 Static VLANs and ACLs do not scale and break Zero Trust principles.
 
 → Aruba switches dynamically enforce access using Downloadable User Roles (DUR).
 
 ---
 
-### Hybrid Transit & IPSec Pinning  
+### Hybrid Transit & IPSec Pinning ([Selective Dual-Path Routing](./02-transit-security-hub-azure/))  
 Standard NVA designs suffer from asymmetric routing and tunnel pinning.
 
 → Dual-path routing:
@@ -72,11 +72,17 @@ Standard NVA designs suffer from asymmetric routing and tunnel pinning.
 
 ---
 
-### Secure Certificate Lifecycle  
+### Inspected Hybrid Identity Flows ([RADIUS over VPN](./02-transit-security-hub-azure/))  
+Extending authentication into Azure introduces visibility gaps and bypass risks.
+
+→ RADIUS/PEAP traffic is routed via VPN Gateway and steered through Palo Alto NVAs, ensuring all identity flows are inspected before reaching the cloud-resident ClearPass Policy Manager.
+
+---
+
+### Secure Certificate Lifecycle ([Entra App Proxy + Intune SCEP](./03-identity-policy-engine/))  
 Traditional SCEP/NDES requires inbound exposure.
 
-→ Entra App Proxy enables outbound-only certificate delivery.
-
+→ Entra App Proxy enables outbound-only certificate delivery with Intune-managed SCEP profiles.
 ---
 
 ## Repository Structure
