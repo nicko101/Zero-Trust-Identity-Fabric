@@ -1,101 +1,154 @@
-# Zero-Trust Identity Fabric
-## Full-Stack Enterprise ZTNA and Hybrid Cloud Transit Hub
+![Unified Fabric Flow](./diagrams/5_overview.png)
 
-![Blueprint](./diagrams/blueprint.png)
+*Figure: End-to-end Zero Trust architecture integrating Aruba edge, ClearPass identity, Azure transit hub, and inspected resource access.*
 
----
-
-## 1. Executive Summary: The Technical Flow
-This architecture demonstrates a production-hardened Hybrid Zero Trust environment. It orchestrates a high-fidelity handshake between on-premises infrastructure and Azure Cloud Services to enforce identity-based access across a distributed fabric.
-
-**Project Context:** This is a 100% greenfield environment engineered entirely from scratch. As a solo project, I was responsible for the end-to-end deployment of all physical/virtual network appliances (VyOS, Palo Alto, Aruba), the bare-metal Proxmox hypervisor, and the complete deployment of all core systems architecture, including Windows Server AD DS, DNS, Enterprise Certificate Authority (PKI/NDES), and the Microsoft Entra ID / Intune hybrid integrations.
-
-[View Advanced Engineering Analysis](./docs/engineering-analysis.md)
+Note: For simplicity, the diagram abstracts the on-premises Palo Alto firewall and dual IPsec tunnel design. In the full implementation, traffic traverses an on-prem NGFW and is split across two tunnels: a direct NVA tunnel for outbound inspection and a VPN Gateway path for load-balanced internal traffic.
 
 ---
 
-## 2. Repository Structure
-This repository is organized into modular engineering phases:
+## Overview
 
-* **[01-infrastructure-core](./01-infrastructure-core/):** Physical and virtualized baseline. Includes Proxmox hypervisor networking, VyOS edge logic, and on-premises firewalling.
-* **[02-transit-security-hub-azure](./02-transit-security-hub-azure/):** The cloud security edge. Contains the Azure Transit VNet, NVA HA Load Balancers, and Gateway UDR steering logic.
-* **[03-identity-policy-engine](./03-identity-policy-engine/):** The Zero Trust brain. Documents ClearPass (CPPM) services, TEAP/EAP-TLS authentication methods, and Intune/Entra ID integration.
-* **[artifacts](./artifacts/):** Centralized backup of all raw configuration files (Azure ARM JSON, Palo Alto XML, and AOS-CX TXT).
-* **[docs](./docs/):** Technical deep dives, engineering analysis, and SIEM/SecOps observability documentation.
+This project demonstrates a production-style **Zero Trust architecture spanning on-premises infrastructure and Microsoft Azure**, built to enforce identity-driven access across a hybrid environment.
 
----
+It replaces traditional perimeter-based security with a model where:
 
-## 3. Breaking the Perimeter Paradox
-This architecture was designed to solve the inherent security and routing limitations of legacy enterprise networks. Shifting the architecture away from legacy static perimeters, this fabric leverages dynamic, micro-segmented enclaves.
-
-![Architecture Overview](./diagrams/5_overview.png)
+- Identity is the control plane  
+- Device compliance determines access  
+- Network segmentation is dynamically enforced  
 
 ---
 
-## 4. Key Technical Challenges Solved
+## Architecture Summary
 
-* ### [Cloud-Native Device Authorization (ClearPass Intune Extension)](./docs/tech-notes/8021x-clearpass-cx.md)
-  * **The Challenge:** As endpoints migrate to Entra ID (Cloud-Only), they no longer exist within on-premises Active Directory, rendering legacy Domain Controllers incapable of acting as the Identity Authority for machine-level authentication.
-  * **The Solution:** Orchestrated a solution using the ClearPass Intune Extension as the real-time authorization source. This allows ClearPass to query Intune via real-time API lookups to confirm both device identity and compliance state before granting access.
+The fabric integrates:
 
-* ### [Dynamic Micro-Segmentation & Downloadable User Roles (DUR)](./docs/tech-notes/8021x-clearpass-cx.md)
-  * **The Challenge:** Statically configuring access control lists (ACLs) and VLANs on every edge switch port creates massive administrative overhead and violates Zero Trust principles.
-  * **The Solution:** Eliminated static VLANs and ACLs at the edge. Upon successful 802.1X/TEAP authentication, Aruba AOS-CX switches dynamically download and enforce granular roles directly from ClearPass.
+- **On-Premises Infrastructure (Proxmox SDDC)**  
+  Palo Alto NGFW, Aruba AOS-CX, ClearPass, AD DS, PKI (NDES)
 
-* ### [Inspected Hybrid Identity Flow (Hybrid RADIUS/PEAP)](./docs/tech-notes/clearpass-azure-radius.md)
-  * **The Challenge:** Securing the identity plane itself. Standard hybrid authentication often treats the RADIUS path as "pre-trusted" traffic, bypassing the security stack.
-  * **The Solution:** Deployed a standalone ClearPass Publisher as an Azure Spoke-resident NVA, functioning independently from the on-premises CPPM cluster. On-premises AOS-CX switches and wireless IAPs perform RADIUS/PEAP authentication via a VPN Gateway tunnel, with all identity traffic steered through the Palo Alto NVA cluster for deep packet inspection (DPI) before reaching the Azure appliance.
+- **Cloud Platform (Azure)**  
+  Hub-and-spoke transit architecture with load-balanced NVAs and VPN Gateway  
 
-* ### [Active/Active Hybrid Transit and Path Isolation](./docs/tech-notes/palo-azure-transit.md)
-  * **The Challenge:** Eliminating NVA "pinning." Terminating all hybrid traffic on a single tunnel forces a single appliance to handle all encrypted flows, preventing horizontal scaling and symmetric load balancing across the cluster.
-  * **The Solution:** Engineered a Dual-Path Transit strategy. On-premises **Internet-bound traffic** is routed via a direct tunnel (Tunnel 300) to the NVA; by keeping this path disconnected from the Spokes, it bypasses the ILB for egress to avoid asymmetry. Conversely, **Internal Spoke-bound traffic** is routed via the VPN Gateway (Tunnel 200). This "normalizes" the traffic by decoupling decryption from inspection, allowing the **Internal Load Balancer (ILB) VIP** to distribute clear flows symmetrically across all active Palo Alto NVAs.
+- **Identity & Compliance (Entra ID + Intune)**  
+  Cloud-based device compliance and certificate lifecycle management  
 
-* ### [Outbound-Only Certificate Retrieval (Entra App Proxy)](./docs/tech-notes/pki-scep-lifecycle.md)
-  * **The Challenge:** Legacy connections for certificate retrieval require opening inbound firewall ports (80/443) to a SCEP/NDES server, creating a significant security risk.
-  * **The Solution:** Eliminated risky inbound firewall ports by leveraging Entra App Proxy and the Microsoft Intune Certificate Connector for secure, outbound-only SCEP/NDES polling.
+Together, these components form a **fully integrated Zero Trust access model**.
 
 ---
 
-## 5. Prerequisites and Environment Baseline
-To fully replicate this environment using the provided infrastructure-as-code and configuration artifacts, the following baseline is required:
+## Key Design Outcomes
 
-* **Cloud Infrastructure (Azure):** Hosting the **Active/Active Palo Alto VM-Series NVA Cluster** and a standalone **Aruba ClearPass Publisher NVA**.
-* **Identity and Access:** A Microsoft Entra ID tenant (P1/P2) and an active Intune MDM environment.
-* **On-Premises Infrastructure (Proxmox VE):** Bare-metal host running a dedicated **Active/Passive Palo Alto HA pair**, **Windows Server (AD DS/PKI)**, a dedicated on-premises **ClearPass Publisher/Subscriber cluster**, and the **Aruba AOS-CX Virtual Switching** suite.
-* **Physical Hardware:** 1 Aruba Instant Access Point (IAP) for wireless edge termination.
-* **Appliance Licensing:** Evaluation Licenses for Palo Alto PAN-OS, Aruba ClearPass, and Microsoft Server components.
-
----
-
-## 6. Reproducibility and Environment Authoring
-Every technical artifact in this repository was custom-engineered to function within this unified fabric. 
-
-The **[Artifacts Folder](./artifacts/)** serves as a centralized source of truth for the complete environment state:
-
-* **Custom Cloud IaC:** Azure ARM JSON templates for the Transit Hub.
-* **Security Policy Engineering:** Full Palo Alto XML configuration exports.
-* **Network Infrastructure State:** Aruba AOS-CX CLI configuration files.
-* **Server Infrastructure:** Windows Server configuration for AD DS, NDES, and SCEP services.
+| Capability | Implementation |
+| :--- | :--- |
+| Identity-Driven Access | ClearPass + Intune (Graph API) |
+| Dynamic Segmentation | Aruba DUR (Downloadable User Roles) |
+| Hybrid Transit Control | Dual-path routing (NVA + VPN Gateway) |
+| Symmetric Inspection | ILB + stateless NVA design |
+| Secure Certificate Delivery | SCEP via Entra App Proxy (outbound-only) |
 
 ---
 
-## 7. Detailed Engineering Deep-Dives
-* [Proxmox Networking and VyOS NAT Logic](./docs/tech-notes/proxmox-networking.md)
-* [PKI Lifecycle: SCEP, NDES, and Intune](./docs/tech-notes/pki-scep-lifecycle.md)
-* [Hybrid Transit: Palo Alto to Azure S2S](./docs/tech-notes/palo-azure-transit.md)
-* [Identity Edge: 802.1X and DUR Logic](./docs/tech-notes/8021x-clearpass-cx.md)
-* [Palo Alto Security and User-ID Integration](./docs/tech-notes/palo-alto-security.md)
-* [Secure Guest WiFi Anatomy](./docs/tech-notes/guest-wifi-anatomy.md)
-* [Entra App Proxy for NDES](./docs/tech-notes/entra-app-proxy.md)
-* [ArubaOS-CX Switching and Port Access](./docs/tech-notes/aruba-cx-switching.md)
-* [ClearPass Advanced Services](./docs/tech-notes/clearpass-advanced-services.md)
-* [SIEM and SecOps: Centralized Logging](./docs/tech-notes/secops-siem-observability.md)
-* [Offensive Validation and Pentesting](./docs/tech-notes/pentesting-offensive-validation.md)
+## Core Challenges Solved
+
+### Cloud-Native Device Authorization  
+Traditional AD cannot validate cloud-only devices.
+
+→ ClearPass integrates with Intune to validate identity and compliance in real time.
 
 ---
 
-* [Access Validation-Proof Hub](./artifacts/)
-* [Technical Deep-Dives Hub](./docs/)
-* [Back to Parent Category](../)
-* [Back to Main Lab Architecture](./)
-* [Back to Top](#zero-trust-identity-fabric)
+### Dynamic Micro-Segmentation  
+Static VLANs and ACLs do not scale and break Zero Trust principles.
+
+→ Aruba switches dynamically enforce access using Downloadable User Roles (DUR).
+
+---
+
+### Hybrid Transit & IPSec Pinning  
+Standard NVA designs suffer from asymmetric routing and tunnel pinning.
+
+→ Dual-path routing:
+- Internet traffic → pinned to a primary NVA  
+- Internal traffic → load-balanced via VPN Gateway + ILB  
+
+---
+
+### Secure Certificate Lifecycle  
+Traditional SCEP/NDES requires inbound exposure.
+
+→ Entra App Proxy enables outbound-only certificate delivery.
+
+---
+
+## Repository Structure
+
+This repository is organized into modular architecture domains:
+
+- **[01 Infrastructure Core](./01-infrastructure-core/)**  
+  Physical and virtual infrastructure baseline  
+
+- **[02 Transit Security Hub (Azure)](./02-transit-security-hub-azure/)**  
+  Hybrid routing, NVA inspection, and traffic engineering  
+
+- **[03 Identity Policy Engine](./03-identity-policy-engine/)**  
+  ClearPass, Intune integration, and Zero Trust enforcement  
+
+- **[Artifacts](./artifacts/)**  
+  Raw configuration files (ARM, XML, CLI)  
+
+- **[Engineering Docs](./docs/)**  
+  Deep dives and technical analysis  
+
+---
+
+## Engineering Deep Dives
+
+Detailed breakdowns of key components and design decisions:
+
+- [802.1X ClearPass CX](./docs/tech-notes/8021x-clearpass-cx.md)  
+- [ClearPass Advanced Services](./docs/tech-notes/clearpass-advanced-services.md)  
+- [Palo Alto Azure Transit](./docs/tech-notes/palo-azure-transit.md)  
+- [PKI SCEP Lifecycle](./docs/tech-notes/pki-scep-lifecycle.md)  
+- [Entra App Proxy](./docs/tech-notes/entra-app-proxy.md)  
+- [Guest WiFi Anatomy](./docs/tech-notes/guest-wifi-anatomy.md)  
+- [SIEM & Observability](./docs/tech-notes/secops-siem-observability.md)  
+
+---
+
+## Validation & Proof
+
+Each module includes full validation evidence, including:
+
+- Routing validation (BGP, traceroute, flow logs)  
+- Identity validation (ClearPass Access Tracker)  
+- Compliance validation (Intune integration)  
+- End-to-end Zero Trust flow verification  
+
+- [Infrastructure Core Validation](./01-infrastructure-core/validation-proof/README.md)  
+- [Transit Hub Validation](./02-transit-security-hub-azure/validation-proof/README.md)  
+- [Identity Engine Validation](./03-identity-policy-engine/validation-proof/README.md)  
+
+---
+
+## Environment Baseline
+
+- **Cloud:** Microsoft Azure  
+- **Identity:** Entra ID + Intune  
+- **On-Prem:** Proxmox SDDC (Palo Alto, ClearPass, AD DS, PKI)  
+- **Network:** Aruba AOS-CX switching + Aruba IAP  
+
+---
+
+## Project Context
+
+This is a **100% greenfield deployment**, built end-to-end as a solo project.
+
+Scope includes:
+
+- Full infrastructure build (compute, networking, security)  
+- Hybrid identity integration (Entra ID, Intune, PKI)  
+- Network access control (ClearPass, 802.1X, DUR)  
+- Azure transit architecture and traffic engineering  
+
+---
+
+[View Full Engineering Analysis](./docs/engineering-analysis.md)

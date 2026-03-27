@@ -1,51 +1,110 @@
 # Implementation Logic: Identity and Policy Orchestration
 
-This directory documents the technical configuration of the Policy Decision Point (PDP). It details the ClearPass service logic, the Intune Graph API integration, and the captive portal orchestration used to enforce Zero Trust access.
+This section documents how the Policy Decision Point (PDP) is implemented. It covers ClearPass service orchestration, Microsoft Intune (Graph API) integration, and guest access workflows used to enforce identity-driven Zero Trust access.
 
 ---
 
 ## 1. ClearPass (CPPM) Service Orchestration
-The CPPM cluster handles the RADIUS handshake and evaluates enforcement policies based on user identity and real-time device health.
 
-* **Service Pipeline:** A consolidated view of the active RADIUS and Web-Auth services configured within the Policy Manager.
+The ClearPass cluster processes all authentication requests and applies policy decisions based on identity and device compliance.
+
+This forms the core enforcement engine of the Zero Trust architecture.
+
+* **Service Pipeline:**  
+  A consolidated view of active RADIUS and Web-Auth services within ClearPass.
 
 ![CPPM Services](./images/cppm_services_list.png)
 
-* **RADIUS Trust:** The server certificate used to establish secure TEAP (EAP-FAST) and EAP-TLS tunnels with endpoints.
+* **RADIUS Trust:**  
+  The server certificate used to establish secure TEAP (EAP-FAST) and EAP-TLS authentication tunnels with endpoints.
 
 ![RADIUS Certificate](./images/cppm_vm_radius_cert.png)
 
-* **Deep Dive:** [ClearPass Advanced Services](../../docs/tech-notes/clearpass-advanced-services.md)
+* **Policy Evaluation:**  
+  Authentication requests are evaluated against multiple sources, including:
+  - Active Directory (identity)  
+  - Intune (device compliance)  
+  - Local enforcement policies  
 
-## 2. Microsoft Intune and Cloud Bridge
-To achieve posture-based access, the on-premises ClearPass engine is integrated with the Microsoft Graph API.
+* **Deep Dive:**  
+  [ClearPass Advanced Services](../../docs/tech-notes/clearpass-advanced-services.md)
 
-* **Intune Extension v6.4.1:** The primary API bridge used for real-time compliance lookups during authentication.
+---
+
+## 2. Microsoft Intune Integration (Cloud Compliance Bridge)
+
+To enable cloud-driven authorization, ClearPass integrates with Microsoft Intune via the Graph API.
+
+This replaces traditional NAC posture checks with real-time compliance signals.
+
+* **Intune Extension (v6.4.1):**  
+  Acts as the API bridge between ClearPass and Microsoft Graph, allowing real-time compliance queries during authentication.
 
 ![Intune Extension](./images/intune_extension.png)
 
-* **Attribute Mapping:** Specific JSON attributes pulled from Intune to determine the health and authorization level of a device.
+* **Attribute Mapping:**  
+  JSON attributes retrieved from Intune are mapped into ClearPass enforcement logic to determine access level.
 
 ![Intune Attributes](./images/Intune-Attributes.png)
 
-* **SCEP Profiles & App Proxy:** The Intune-side configuration for automated certificate delivery via the outbound-only Entra App Proxy tunnel.
+* **Authorization Logic:**  
+  Devices must be marked as **Compliant** in Intune to receive full network access.
+
+* **SCEP Profiles & App Proxy:**  
+  Intune is configured for automated certificate delivery via SCEP, using Entra App Proxy to enable secure outbound-only communication.
 
 ![SCEP Profiles](./images/intune-scep-profiles.png)
 
 ![App Proxy Config](./images/app-proxy-config.png)
 
-* **Deep Dive:** [Entra App Proxy](../../docs/tech-notes/entra-app-proxy.md) | [PKI SCEP Lifecycle](../../docs/tech-notes/pki-scep-lifecycle.md)
+* **Deep Dive:**  
+  [Entra App Proxy](../../docs/tech-notes/entra-app-proxy.md)  
+  [PKI SCEP Lifecycle](../../docs/tech-notes/pki-scep-lifecycle.md)
+
+---
 
 ## 3. Guest Access and Captive Portal
-The environment provides a secure, isolated guest flow utilizing dynamic VLAN assignment and a web-based captive portal.
 
-* **Portal Configuration:** The ClearPass Guest skin and field logic for visitor registration.
+The environment includes a segregated guest access workflow using ClearPass Guest and Aruba Instant AP integration.
+
+This allows unmanaged devices to securely access the network without compromising internal resources.
+
+* **Portal Configuration:**  
+  Defines the ClearPass Guest portal, including registration fields and authentication workflow.
 
 ![Guest Portal](./images/cppm_guest_portal_config.png)
 
-* **IAP Integration:** Aruba Instant AP configuration for intercepting and redirecting unauthenticated guest clients to the portal.
+* **IAP Integration:**  
+  Aruba Instant APs intercept unauthenticated traffic and redirect users to the captive portal for onboarding.
 
 ![IAP Portal Config](./images/config_IAP_guest_captive_portal.PNG)
 
+* **Dynamic Segmentation:**  
+  Guest users are assigned to isolated VLANs with restricted access policies.
+
 ---
+
+## 4. Dynamic Enforcement (DUR Integration)
+
+Following successful authentication, ClearPass dynamically enforces access using Downloadable User Roles (DUR).
+
+* **Role Assignment:**  
+  DURs are pushed to Aruba AOS-CX switches after authentication
+
+* **Policy Enforcement:**  
+  Roles define:
+  - VLAN assignment  
+  - Access control policies  
+  - Network segmentation  
+
+* **Identity-Based Access:**  
+  Access policies are applied dynamically based on:
+  - User identity  
+  - Device compliance (Intune)  
+  - Authentication method  
+
+This ensures consistent policy enforcement regardless of physical network location.
+
+---
+
 [Back to Top](#implementation-logic-identity-and-policy-orchestration) | [Back to Main Architecture](../../README.md)
