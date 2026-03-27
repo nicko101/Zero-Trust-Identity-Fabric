@@ -63,6 +63,16 @@ Together, these components form a **fully integrated Zero Trust access model**.
 
 ---
 
+---
+
+## Engineering Analysis
+
+Detailed design decisions, trade-offs, and architectural reasoning behind this implementation are documented separately.
+
+[View Full Engineering Analysis](./docs/engineering-analysis.md)
+
+---
+
 ## Key Design Outcomes
 
 | Capability | Implementation |
@@ -95,6 +105,7 @@ Static VLANs and ACLs do not scale and break Zero Trust principles.
 ![Dynamic Enforcement via DUR](./diagrams/dur.png)
 
 *Figure: Dynamic segmentation using Downloadable User Roles, eliminating static VLAN and ACL-based access control.*
+
 ---
 
 ### Hybrid Transit & IPSec Pinning ([Selective Dual-Path Routing](./02-transit-security-hub-azure/))  
@@ -114,7 +125,7 @@ This design allows NVAs to operate in a load-balanced, stateless model for inter
 
 ### Inspected Hybrid Identity Flows ([RADIUS over VPN](./02-transit-security-hub-azure/))  
 Extending authentication into Azure introduces visibility gaps and bypass risks.
-
+- Hybrid identity traffic is extended into Azure and inspected via NVAs before reaching ClearPass ([see Transit Module](./02-transit-security-hub-azure/))
 → RADIUS/PEAP traffic is routed via VPN Gateway and steered through Palo Alto NVAs, ensuring all identity flows are inspected before reaching the cloud-resident ClearPass Policy Manager.
 
 ---
