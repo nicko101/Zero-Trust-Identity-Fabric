@@ -1,8 +1,9 @@
-![Unified Fabric Flow](./diagrams/5_overview.png)
+# Zero-Trust Identity Fabric
+## Full-Stack Enterprise ZTNA and Hybrid Cloud Transit Hub
 
-*Figure: End-to-end Zero Trust architecture integrating Aruba edge, ClearPass identity, Azure transit hub, and inspected resource access.*
+![Unified Fabric Flow](./diagrams/unified.png)
 
-Note: For simplicity, the diagram abstracts the on-premises Palo Alto firewall and dual IPsec tunnel design. In the full implementation, traffic traverses an on-prem NGFW and is split across two tunnels: a direct NVA tunnel for outbound inspection and a VPN Gateway path for load-balanced internal traffic.
+*Figure: End-to-end Zero Trust architecture showing identity enforcement, dynamic segmentation, and hybrid transit across on-prem and Azure.*
 
 ---
 
@@ -10,11 +11,38 @@ Note: For simplicity, the diagram abstracts the on-premises Palo Alto firewall a
 
 This project demonstrates a production-style **Zero Trust architecture spanning on-premises infrastructure and Microsoft Azure**, built to enforce identity-driven access across a hybrid environment.
 
-It replaces traditional perimeter-based security with a model where:
+A single access request is orchestrated across three control planes:
+
+- Identity (ClearPass + Intune)  
+- Network Enforcement (Aruba + DUR)  
+- Hybrid Transit (Palo Alto + Azure)  
+
+This replaces traditional perimeter-based security with a model where:
 
 - Identity is the control plane  
 - Device compliance determines access  
 - Network segmentation is dynamically enforced  
+
+---
+
+## Repository Structure
+
+This repository is organized into modular architecture domains:
+
+- **[01 Infrastructure Core](./01-infrastructure-core/)**  
+  Physical and virtual infrastructure baseline  
+
+- **[02 Transit Security Hub (Azure)](./02-transit-security-hub-azure/)**  
+  Hybrid routing, NVA inspection, and traffic engineering  
+
+- **[03 Identity Policy Engine](./03-identity-policy-engine/)**  
+  ClearPass, Intune integration, and Zero Trust enforcement  
+
+- **[Artifacts](./artifacts/)**  
+  Raw configuration files (ARM, XML, CLI)  
+
+- **[Engineering Docs](./docs/)**  
+  Deep dives and technical analysis  
 
 ---
 
@@ -42,7 +70,6 @@ Together, these components form a **fully integrated Zero Trust access model**.
 | Identity-Driven Access | ClearPass + Intune (Graph API) |
 | Dynamic Segmentation | Aruba DUR (Downloadable User Roles) |
 | Hybrid Transit Control | Dual-path routing (NVA + VPN Gateway) |
-| Symmetric Inspection | ILB + stateless NVA design |
 | Secure Certificate Delivery | SCEP via Entra App Proxy (outbound-only) |
 
 ---
@@ -54,6 +81,10 @@ Traditional AD cannot validate cloud-only devices.
 
 → ClearPass integrates with Intune via the Intune Extension to validate identity and compliance in real time.
 
+![Intune Extension Flow](./diagrams/extension.png)
+
+*Figure: ClearPass leveraging the Intune Extension and Microsoft Graph API to enforce real-time device compliance during authentication.*
+
 ---
 
 ### Dynamic Micro-Segmentation ([Aruba DUR](./03-identity-policy-engine/))  
@@ -61,14 +92,23 @@ Static VLANs and ACLs do not scale and break Zero Trust principles.
 
 → Aruba switches dynamically enforce access using Downloadable User Roles (DUR).
 
+![Dynamic Enforcement via DUR](./diagrams/dur.png)
+
+*Figure: Dynamic segmentation using Downloadable User Roles, eliminating static VLAN and ACL-based access control.*
 ---
 
 ### Hybrid Transit & IPSec Pinning ([Selective Dual-Path Routing](./02-transit-security-hub-azure/))  
 Standard NVA designs suffer from asymmetric routing and tunnel pinning.
 
+![Dual-Path Routing](./diagrams/dual-path.png)
+
+*Figure: Dual-path routing architecture separating internet-bound and internal traffic to maintain session symmetry and eliminate IPsec tunnel pinning.*
+
 → Dual-path routing:
 - Internet traffic → pinned to a primary NVA  
 - Internal traffic → load-balanced via VPN Gateway + ILB  
+
+This design allows NVAs to operate in a load-balanced, stateless model for internal traffic while preserving session integrity for outbound flows.
 
 ---
 
@@ -83,27 +123,10 @@ Extending authentication into Azure introduces visibility gaps and bypass risks.
 Traditional SCEP/NDES requires inbound exposure.
 
 → Entra App Proxy enables outbound-only certificate delivery with Intune-managed SCEP profiles.
----
 
-## Repository Structure
+![Secure Certificate Lifecycle](./diagrams/app-proxy.png)
 
-This repository is organized into modular architecture domains:
-
-- **[01 Infrastructure Core](./01-infrastructure-core/)**  
-  Physical and virtual infrastructure baseline  
-
-- **[02 Transit Security Hub (Azure)](./02-transit-security-hub-azure/)**  
-  Hybrid routing, NVA inspection, and traffic engineering  
-
-- **[03 Identity Policy Engine](./03-identity-policy-engine/)**  
-  ClearPass, Intune integration, and Zero Trust enforcement  
-
-- **[Artifacts](./artifacts/)**  
-  Raw configuration files (ARM, XML, CLI)  
-
-- **[Engineering Docs](./docs/)**  
-  Deep dives and technical analysis  
-
+*Figure: Entra App Proxy enabling secure outbound-only certificate retrieval, removing the need for inbound exposure to NDES.*
 ---
 
 ## Engineering Deep Dives
