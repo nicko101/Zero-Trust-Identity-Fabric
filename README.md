@@ -127,7 +127,6 @@ This design allows NVAs to operate in a load-balanced, stateless model for inter
 Extending authentication into Azure introduces visibility gaps and bypass risks.
 
 - Hybrid identity traffic is extended into Azure and inspected via NVAs before reaching ClearPass  
-  ([Transit Architecture](./02-transit-security-hub-azure/) | [RADIUS Flow Deep Dive](./docs/tech-notes/clearpass-radius-flow.md))
 
 → RADIUS/PEAP traffic is routed via VPN Gateway and steered through Palo Alto NVAs, ensuring all identity flows are inspected before reaching the cloud-resident ClearPass Policy Manager.
 
