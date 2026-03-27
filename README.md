@@ -123,9 +123,12 @@ This design allows NVAs to operate in a load-balanced, stateless model for inter
 
 ---
 
-### Inspected Hybrid Identity Flows ([RADIUS over VPN](./02-transit-security-hub-azure/))  
+### Inspected Hybrid Identity Flows ([RADIUS over VPN](./docs/tech-notes/clearpass-radius-flow.md))  
 Extending authentication into Azure introduces visibility gaps and bypass risks.
-- Hybrid identity traffic is extended into Azure and inspected via NVAs before reaching ClearPass ([see Transit Module](./02-transit-security-hub-azure/))
+
+- Hybrid identity traffic is extended into Azure and inspected via NVAs before reaching ClearPass  
+  ([Transit Architecture](./02-transit-security-hub-azure/) | [RADIUS Flow Deep Dive](./docs/tech-notes/clearpass-radius-flow.md))
+
 → RADIUS/PEAP traffic is routed via VPN Gateway and steered through Palo Alto NVAs, ensuring all identity flows are inspected before reaching the cloud-resident ClearPass Policy Manager.
 
 ---
