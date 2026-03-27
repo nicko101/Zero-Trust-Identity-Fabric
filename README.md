@@ -146,6 +146,7 @@ Detailed breakdowns of key components and design decisions:
 
 - [802.1X ClearPass CX](./docs/tech-notes/8021x-clearpass-cx.md)  
 - [ClearPass Advanced Services](./docs/tech-notes/clearpass-advanced-services.md)  
+- [ClearPass RADIUS Flow](./docs/tech-notes/clearpass-radius-flow.md)  
 - [Palo Alto Azure Transit](./docs/tech-notes/palo-azure-transit.md)  
 - [PKI SCEP Lifecycle](./docs/tech-notes/pki-scep-lifecycle.md)  
 - [Entra App Proxy](./docs/tech-notes/entra-app-proxy.md)  
@@ -191,4 +192,4 @@ Scope includes:
 
 ---
 
-[View Full Engineering Analysis](./docs/engineering-analysis.md)
+[Back to Top](#zero-trust-identity-fabric) | [View Engineering Docs](./docs/)

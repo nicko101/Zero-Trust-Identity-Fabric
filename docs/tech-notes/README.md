@@ -12,6 +12,7 @@ Detailed engineering documentation focusing on the implementation, validation, a
 * [ClearPass Advanced Services](./clearpass-advanced-services.md): Onboarding, OnGuard posture, and profiling.
 * [Guest WiFi Anatomy](./guest-wifi-anatomy.md): Secure segmentation and automated captive portal lifecycle.
 * [ArubaOS-CX Switching](./aruba-cx-switching.md): Port access controls and Downloadable User Roles (DUR).
+* [ClearPass RADIUS Flow](./clearpass-radius-flow.md): End-to-end hybrid authentication flow across on-prem and Azure transit.
 
 ## Cloud and PKI Lifecycle
 * [PKI and SCEP Lifecycle](./pki-scep-lifecycle.md): Intune, NDES, and automated certificate distribution.
