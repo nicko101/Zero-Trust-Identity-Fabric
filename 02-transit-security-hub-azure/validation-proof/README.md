@@ -1,90 +1,97 @@
 # Validation Proof: Transit Security Hub (Azure)
 
-This folder contains the technical evidence and engineering blueprints validating the Multi-Tunnel Transit Hub and the split-routing architectural solution between On-Premises and Azure.
+This section provides technical evidence validating the Azure Transit Security Hub architecture and its ability to enforce inspected, symmetric, and identity-aware traffic flows across hybrid environments.
 
 ---
 
-## 🔹 Validation Objectives
+## Validation Objectives
 
-This section validates that the Azure Transit Security Hub meets the core architectural guarantees defined in the design:
+This section validates that the Azure Transit Security Hub meets the core architectural guarantees:
 
-- **Symmetric Routing:** All flows return via the same NVA instance to preserve state  
-- **Full Traffic Inspection:** No hybrid or inter-zone traffic bypasses the NVA layer  
-- **Hybrid Identity Reachability:** On-premises authentication traffic successfully reaches the cloud-resident ClearPass node  
-- **Split-Path Routing Behaviour:** Internet and internal traffic follow distinct, controlled paths  
-- **High Availability:** Traffic continues to flow during NVA or path changes  
+- **Symmetric Routing**  
+  All flows return via the same NVA instance to preserve session state  
 
-Each validation artefact below maps directly to one or more of these guarantees.
+- **Full Traffic Inspection**  
+  No hybrid or inter-zone traffic bypasses the NVA layer  
 
----
+- **Hybrid Identity Reachability**  
+  On-premises authentication traffic successfully reaches the cloud-resident ClearPass node  
 
-## 1. Hybrid Connectivity & Macro Architecture
+- **Split-Path Routing Behaviour**  
+  Internet and internal traffic follow distinct, controlled paths  
 
-Confirms that the hybrid control plane (IPSec + BGP) is stable and capable of supporting identity and application traffic flows between on-premises and Azure.
+- **High Availability Behaviour**  
+  Traffic continues to flow correctly across load-balanced NVAs  
 
-* **S2S Tunnel Status:**  
-![Connection Proof](./images/proof_connection.png)
-
-* **BGP Adjacency (VPNGW):**  
-![VPNGW BGP](./images/palo-azure_vpngw_bgp.png)
+Each validation artefact below maps directly to these guarantees.
 
 ---
 
-## 2. Split-Routing Validation (Selective Dual-Path Behaviour)
+## 1. Split-Routing Validation (Dual-Path Behaviour)
 
-Validates that traffic is correctly separated between the NVA-inspected path and the VPN Gateway path, solving IPSec tunnel pinning while maintaining symmetric routing.
+Validates that traffic is correctly separated between:
+
+- Direct NVA tunnel (internet-bound traffic)  
+- VPN Gateway path (internal hybrid traffic)  
+
+This confirms resolution of IPSec tunnel pinning and controlled traffic steering.
 
 * **Split-Routing Logic Analysis:**  
 ![Split Routing Analysis](./images/proof_split_routing.png)
 
-* **NVA Pathing Verification:**  
+* **NVA vs VPN Gateway Pathing:**  
 ![NVA vs Gateway Pathing](./images/proof_split_routing_nva_gw_.png)
 
-* **Traceroute & ICMP Path Validation:**  
-![Routing Logic](./images/proof_split_routing_nva_gw_.png)  
+* **Traceroute & ICMP Validation:**  
 ![POC Verification](./images/proof_poc_split_routing.png)
 
 ---
 
-## 3. NVA Inspection & Hybrid Identity Proof
+## 2. NVA Inspection & Traffic Enforcement
 
-Confirms that all authentication and hybrid traffic flows are inspected at Layer 7 by the NVA before reaching the cloud-resident identity services.
+Confirms that all hybrid traffic is inspected at the NVA layer before reaching Azure workloads or identity services.
 
-* **Palo Alto NVA Flow Logs (On-Prem to Cloud RADIUS):**  
-  Proves the NVA is successfully intercepting and permitting authentication traffic from the physical edge.  
+* **Palo Alto NVA Flow Logs (RADIUS / Hybrid Traffic):**  
+  Demonstrates that authentication and hybrid flows are intercepted and processed by the NVA.  
 ![NVA Inspection Logs](./images/logs_onprem_pa-cppmvm1812.png)
 
-* **ClearPass PEAP Authentication Success:**  
-  This Access Tracker capture from `CPPM3` (Azure) provides definitive proof of the hybrid identity solution, showing successful **PEAP-MSCHAPv2** authentication for on-premises clients (`lab-wired` service) traversing the Azure Transit Hub.  
+---
+
+## 3. Hybrid Identity Validation (ClearPass in Azure)
+
+Validates that on-premises authentication traffic successfully reaches the cloud-resident Policy Decision Point (ClearPass).
+
+* **ClearPass Authentication Success (Access Tracker):**  
+  Confirms successful **PEAP-MSCHAPv2 authentication** for on-premises clients via the Azure Transit Hub.  
 ![ClearPass PEAP Success](./images/proof_logs_cppm_vm_peap.png)
 
-* **End-to-End Traffic Flow Proof:**  
-![General Proof](./images/proof.png)
+This proves:
+
+- Identity traffic traverses the VPN Gateway path  
+- Traffic is inspected before reaching ClearPass  
+- Policy decisions are enforced in the cloud  
 
 ---
 
-## 4. Supplementary Evidence Logs
+## 4. Supplementary Evidence
 
-Additional supporting logs for deeper validation and troubleshooting:
+Additional supporting logs for troubleshooting and deeper validation:
 
-* **VPN Gateway Spoke Logs:**  
-  [./images/2303_logs_vpn_gw_spoke.png](./images/2303_logs_vpn_gw_spoke.png)
-
-* **General Split-Routing Evidence:**  
-  [./images/proof_split_routing.png](./images/proof_split_routing.png)
+* [VPN Gateway Logs](./images/2303_logs_vpn_gw_spoke.png)  
+* [Additional Split-Routing Evidence](./images/proof_split_routing_.png)
 
 ---
 
-## 🔹 Validation Summary
+## Validation Summary
 
 The results confirm that:
 
-- All hybrid authentication flows are successfully inspected and enforced  
+- All hybrid authentication flows are inspected and enforced  
 - Routing symmetry is preserved across load-balanced NVAs  
-- Split-path routing operates as designed without introducing asymmetric drops  
-- The architecture enforces a strict "no shortcut" inspection policy  
+- Split-path routing operates correctly without asymmetric drops  
+- No traffic bypasses the inspection layer  
 
-This validates the design as production-ready for identity-driven hybrid access.
+This validates the architecture as a production-ready Zero Trust hybrid access model.
 
 ---
 
