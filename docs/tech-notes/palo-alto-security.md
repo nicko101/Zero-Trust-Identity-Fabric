@@ -6,6 +6,82 @@ This document details the routing architecture, traffic engineering, and inspect
 
 ## Overview
 
+## Hybrid Transit and Dual-Path Routing Logic
+
+To enable scalable inspection and eliminate IPSec tunnel pinning, the architecture implements a dual-path hybrid routing model between On-Premises and Azure.
+
+### Tunnel Design
+
+| Tunnel ID | Termination Point | Role |
+| :--- | :--- | :--- |
+| **Tunnel 200** | Azure VPN Gateway | Internal hybrid traffic (Spoke ↔ On-Prem via ILB) |
+| **Tunnel 300** | Palo Alto NVA | Internet-bound traffic (direct inspection path) |
+
+---
+
+## The Symmetry and Scaling Challenge
+
+In a traditional NVA-only design:
+
+- Encrypted traffic becomes pinned to a single firewall instance  
+- Load balancing across NVAs is not possible  
+- Asymmetric routing causes session drops  
+
+---
+
+## The Solution: Gateway Decoupling
+
+The architecture separates **decryption from inspection**:
+
+1. **Decryption**  
+   Handled by Azure VPN Gateway (Tunnel 200)
+
+2. **Traffic Distribution**  
+   Traffic is forwarded to the Internal Load Balancer (ILB)
+
+3. **Inspection**  
+   The ILB distributes flows across NVAs using hash-based load balancing  
+
+This enables:
+
+- Horizontal scaling across NVAs  
+- Symmetric routing per session  
+- Stable session handling  
+
+---
+
+## Policy-Based Forwarding (On-Premises)
+
+On the on-premises Palo Alto firewall, Policy-Based Forwarding (PBF) is used to control tunnel selection.
+
+- **Internal Traffic**
+  - Match: Azure Spoke ranges (RFC1918)
+  - Action: Forward to `tunnel.200` (VPN Gateway path)
+
+- **Internet Traffic**
+  - Match: Non-RFC1918 destinations
+  - Action: Forward to `tunnel.300` (Direct NVA path)
+
+This ensures strict separation between:
+
+- Internal hybrid flows  
+- Internet-bound traffic  
+
+---
+
+## Azure Return Path Enforcement
+
+To maintain symmetric routing, Azure enforces return paths using User-Defined Routes (UDRs):
+
+- Spoke subnets route on-prem traffic via the Internal Load Balancer (ILB)  
+- GatewaySubnet routes redirect traffic to the ILB for inspection  
+
+This guarantees:
+
+- No asymmetric routing  
+- NVAs remain in-path for the full session lifecycle  
+- Consistent inspection across all flows  
+
 The NVAs operate as **stateless firewalls (no session synchronisation)** and act as the central inspection and routing layer for all hybrid traffic.
 
 To support this model, the design enforces:
