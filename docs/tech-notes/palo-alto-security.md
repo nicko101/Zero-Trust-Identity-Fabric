@@ -38,34 +38,55 @@ These screenshots show the tunnel termination points across the on-premises Palo
 
 ## The Symmetry and Scaling Challenge
 
-In a traditional NVA-only design:
+In a traditional design where IPSec tunnels terminate directly on an NVA:
 
-- Encrypted traffic becomes pinned to a single firewall instance
-- Load balancing across NVAs is not possible
-- Asymmetric routing causes session drops
+- All traffic is pinned to a single firewall instance due to tunnel termination  
+- The Internal Load Balancer cannot distribute traffic, as flows are already bound to one NVA  
+- Horizontal scaling across NVAs is not possible  
+
+Additionally, in a load-balanced NVA design:
+
+- Return traffic may be routed to a different NVA instance  
+- This creates asymmetric routing  
+- Stateless firewall operation results in session drops  
+
+These combined challenges prevent both scalability and reliable session handling in hybrid environments.
+
+---
+
+## The Solution: Eliminating NVA Tunnel Pinning
+
+In a single-tunnel design where IPSec terminates directly on an NVA, all traffic becomes pinned to a single firewall instance.
+
+This prevents:
+
+- Load balancing across NVAs  
+- Horizontal scaling  
+- Consistent session distribution  
 
 ---
 
-## The Solution: Gateway Decoupling
+To solve this, the architecture separates traffic paths:
 
-The architecture separates **decryption from inspection**:
+### Internal Hybrid Traffic (Spoke, RADIUS, East-West)
 
-1. **Decryption**  
-   Handled by Azure VPN Gateway (Tunnel 200)
+- Routed via **Tunnel 200 → Azure VPN Gateway**
+- VPN Gateway terminates IPSec (decapsulation)
+- Traffic is forwarded to the **Internal Load Balancer (ILB)**
+- ILB distributes flows across NVAs
 
-2. **Traffic Distribution**  
-   Traffic is forwarded to the Internal Load Balancer (ILB)
+### Internet-Bound Traffic
 
-3. **Inspection**  
-   The ILB distributes flows across NVAs using hash-based load balancing
-
-This enables:
-
-- Horizontal scaling across NVAs
-- Symmetric routing per session
-- Stable session handling
+- Routed via **Tunnel 300 → Direct to NVA**
+- Ensures deterministic outbound inspection and NAT
 
 ---
+
+This design ensures:
+
+- Internal traffic is **load-balanced across NVAs**
+- Internet traffic remains **deterministic and stable**
+- Tunnel pinning is eliminated where scaling is required
 
 ## Azure Return Path Enforcement
 
