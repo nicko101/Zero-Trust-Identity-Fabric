@@ -6,16 +6,33 @@ This document details the routing architecture, traffic engineering, and inspect
 
 ## Overview
 
+The NVAs operate as stateful firewalls without session synchronisation and act as the central inspection and routing layer for all hybrid traffic.
+
+To support this model, the design enforces:
+
+- Deterministic traffic paths
+- Symmetric routing per session
+- Full Layer 7 inspection
+- No routing shortcuts
+
+---
+
 ## Hybrid Transit and Dual-Path Routing Logic
 
 To enable scalable inspection and eliminate IPSec tunnel pinning, the architecture implements a dual-path hybrid routing model between On-Premises and Azure.
 
 ### Tunnel Design
 
-| Tunnel ID | Termination Point | Role |
-| :--- | :--- | :--- |
-| **Tunnel 200** | Azure VPN Gateway | Internal hybrid traffic (Spoke ↔ On-Prem via ILB) |
-| **Tunnel 300** | Palo Alto NVA | Internet-bound traffic (direct inspection path) |
+| Tunnel ID | Hosted On | Terminates At | Role |
+| :--- | :--- | :--- | :--- |
+| **Tunnel 200** | On-Prem Palo Alto | Azure VPN Gateway | Internal hybrid traffic (Spoke ↔ On-Prem via ILB) |
+| **Tunnel 300** | On-Prem Palo Alto | Azure NVA | Internet-bound traffic (direct inspection path) |
+| **Tunnel 100** | Azure NVA | On-Prem Palo Alto | Return path for hybrid and inspected traffic |
+
+![NVA Tunnels](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/nva-tunnels.png)
+
+![On-Prem Tunnels](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/onprem_tunnells.png)
+These screenshots show the tunnel termination points across the on-premises Palo Alto and Azure NVA, illustrating the dual-path architecture and return path via tunnel.100.
 
 ---
 
@@ -23,9 +40,9 @@ To enable scalable inspection and eliminate IPSec tunnel pinning, the architectu
 
 In a traditional NVA-only design:
 
-- Encrypted traffic becomes pinned to a single firewall instance  
-- Load balancing across NVAs is not possible  
-- Asymmetric routing causes session drops  
+- Encrypted traffic becomes pinned to a single firewall instance
+- Load balancing across NVAs is not possible
+- Asymmetric routing causes session drops
 
 ---
 
@@ -40,32 +57,13 @@ The architecture separates **decryption from inspection**:
    Traffic is forwarded to the Internal Load Balancer (ILB)
 
 3. **Inspection**  
-   The ILB distributes flows across NVAs using hash-based load balancing  
+   The ILB distributes flows across NVAs using hash-based load balancing
 
 This enables:
 
-- Horizontal scaling across NVAs  
-- Symmetric routing per session  
-- Stable session handling  
-
----
-
-## Policy-Based Forwarding (On-Premises)
-
-On the on-premises Palo Alto firewall, Policy-Based Forwarding (PBF) is used to control tunnel selection.
-
-- **Internal Traffic**
-  - Match: Azure Spoke ranges (RFC1918)
-  - Action: Forward to `tunnel.200` (VPN Gateway path)
-
-- **Internet Traffic**
-  - Match: Non-RFC1918 destinations
-  - Action: Forward to `tunnel.300` (Direct NVA path)
-
-This ensures strict separation between:
-
-- Internal hybrid flows  
-- Internet-bound traffic  
+- Horizontal scaling across NVAs
+- Symmetric routing per session
+- Stable session handling
 
 ---
 
@@ -73,23 +71,14 @@ This ensures strict separation between:
 
 To maintain symmetric routing, Azure enforces return paths using User-Defined Routes (UDRs):
 
-- Spoke subnets route on-prem traffic via the Internal Load Balancer (ILB)  
-- GatewaySubnet routes redirect traffic to the ILB for inspection  
+- Spoke subnets route on-prem traffic via the Internal Load Balancer (ILB)
+- GatewaySubnet routes redirect traffic to the ILB for inspection
 
 This guarantees:
 
-- No asymmetric routing  
-- NVAs remain in-path for the full session lifecycle  
-- Consistent inspection across all flows  
-
-The NVAs operate as **stateless firewalls (no session synchronisation)** and act as the central inspection and routing layer for all hybrid traffic.
-
-To support this model, the design enforces:
-
-- Deterministic traffic paths
-- Symmetric routing per session
-- Full Layer 7 inspection
-- No routing shortcuts
+- No asymmetric routing
+- NVAs remain in-path for the full session lifecycle
+- Consistent inspection across all flows
 
 ---
 
@@ -97,10 +86,10 @@ To support this model, the design enforces:
 
 The NVA is segmented into multiple Virtual Routers (VRs) to separate traffic domains:
 
-- **Trust VR**
+- **Trust VR**  
   Handles internal and hybrid traffic (Spoke VNets, On-Prem, Identity services)
 
-- **Untrust VR**
+- **Untrust VR**  
   Handles internet-bound traffic and NAT egress
 
 This separation ensures deterministic routing and prevents unintended traffic leakage.
@@ -117,7 +106,7 @@ Traffic is explicitly passed between VRs based on destination:
 
 - Internal traffic enters via the Trust interface
 - Internet-bound traffic is forwarded:
-  Trust VR to Untrust VR
+  Trust VR → Untrust VR
 
 This enforces strict separation between internal and external traffic flows.
 
@@ -128,6 +117,8 @@ This enforces strict separation between internal and external traffic flows.
 Each VR maintains independent routing logic.
 
 ### Trust VR
+
+![Trust VR Route Table](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/nva_vr_trust.png)
 
 Routes to:
 
@@ -183,10 +174,6 @@ The NVA enforces the dual-path routing model:
 
 This ensures full inspection and symmetric routing across all flows.
 
-![NVA Tunnels](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/nva-tunnels.png)
-
-![On-Prem Tunnels](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/onprem_tunnells.png)
-
 ---
 
 ## Internal Source NAT for Symmetric Return
@@ -194,7 +181,7 @@ This ensures full inspection and symmetric routing across all flows.
 To support the stateless load-balanced design, Source NAT is applied to internal traffic flows.
 
 - Traffic is translated to the NVA Trust interface IP
-- Return traffic is forced back to the same NVA instance
+- Return traffic is directed back to the same NVA instance
 
 Without this:
 
@@ -215,3 +202,9 @@ This guarantees:
 
 - [Transit Security Hub](../../02-transit-security-hub-azure/)
 - [Implementation Logic](../../02-transit-security-hub-azure/implementation-logic/README.md)
+
+---
+
+**Navigation**
+
+[Back to Tech Notes](./README.md) | [Back to Main Architecture](../../README.md)
