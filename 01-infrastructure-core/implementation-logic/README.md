@@ -59,4 +59,8 @@ Continuous monitoring and security validation are integrated into the core fabri
 * **Logic:** The environment is instrumented with centralized logging for real-time observability and subjected to **offensive security simulations**.
 * **Deep Dive:** [SecOps and Observability](../../docs/tech-notes/secops-siem-observability.md) | [Offensive Validation](../../docs/tech-notes/pentesting-offensive-validation.md)
 
+Related Modules:
+- [Transit Security Hub](../../02-transit-security-hub-azure/)
+- [Identity Policy Engine](../../03-identity-policy-engine/)
+
 [Back to Top](#implementation-logic-infrastructure-core) | [Back to Main Architecture](../../README.md)

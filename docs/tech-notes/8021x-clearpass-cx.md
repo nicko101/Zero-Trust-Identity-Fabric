@@ -32,4 +32,7 @@ If a device's compliance status changes in Intune (e.g., it is marked non-compli
 * **Action:** The switch is instructed to immediately terminate the session or move the device to a "Quarantine" VLAN without the user needing to unplug.
 
 ---
+
+**Navigation**
+
 [Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

@@ -34,4 +34,6 @@ Every access port is a "Colorless Port," reacting to the identity provided by th
 
 ---
 
+**Navigation**
+
 [Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

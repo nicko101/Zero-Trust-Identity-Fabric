@@ -29,4 +29,6 @@ The effectiveness of this logging and profiling is validated using a kali linux 
 
 ---
 
-[back to engineering analysis](../engineering-analysis.md)
+**Navigation**
+
+[Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

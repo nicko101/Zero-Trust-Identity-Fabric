@@ -39,6 +39,4 @@ The guest lifecycle is fully automated to provide secure access with minimal adm
 
 **Navigation**
 
----
-
 [Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

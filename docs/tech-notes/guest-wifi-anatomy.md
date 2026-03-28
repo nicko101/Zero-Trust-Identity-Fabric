@@ -27,4 +27,7 @@ This schematic highlights the critical relationship between the standard network
 * **Policy in Action:** Strict implicit-deny rules block all lateral movement from the Guest Zone (`10.0.50.1/24`) into the primary `10.0.0.0/8` internal subnets.
 
 ---
+
+**Navigation**
+
 [Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

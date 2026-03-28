@@ -50,19 +50,15 @@ This enables a **cloud-first identity model** while preserving network-level enf
   - Layer 7 inspection  
   - Security policy enforcement  
 
-![Azure Route Table - VPN Gateway](../../02-transit-security-hub-azure/implementation-logic/images/az-route-table-vpngw.png)
-
-![Internal Load Balancer VIP](../../02-transit-security-hub-azure/implementation-logic/images/az_ilb_vip.png)
-
 ---
 
 ### 5. Policy Decision Point (ClearPass in Azure)
 
 - RADIUS request reaches ClearPass (CPPM3) in Azure  
-
-![ClearPass Azure VM](../../02-transit-security-hub-azure/implementation-logic/images/cppm+az_vm.png)
-
-![RADIUS Certificate](../../02-transit-security-hub-azure/implementation-logic/images/cppm_vm_radius_cert.png)
+- ClearPass performs:
+  - Certificate validation (EAP-TLS)  
+  - User authentication (MSCHAPv2 / AD)  
+  - Device compliance check via Intune Extension (Graph API)  
 
 ---
 
@@ -142,15 +138,6 @@ This design:
 
 ---
 
-## Validation Evidence
-
-This flow is validated through:
-
-- Azure route tables enforcing ILB steering  
-- Palo Alto session logs confirming RADIUS inspection  
-- ClearPass authentication logs validating policy decisions  
-- Tunnel status confirming hybrid connectivity  
-
 ## Related Modules
 
 - [Transit Security Hub](../../02-transit-security-hub-azure/)  
@@ -164,6 +151,5 @@ Authentication is a distributed, inspected, and identity-driven process spanning
 
 ---
 
-**Navigation**
-
-[Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)
+[Back to Engineering Docs](../README.md)  
+[Back to Main Architecture](../../README.md)
