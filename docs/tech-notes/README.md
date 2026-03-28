@@ -3,7 +3,6 @@
 Detailed engineering documentation focusing on the implementation, validation, and optimization of specific Zero-Trust components within the fabric.
 
 ## Network Security and Transit
-* [Palo Alto Azure Transit](./palo-azure-transit.md): Dual-tunnel S2S IPsec and VNet peering logic.
 * [Palo Alto Security Logic](./palo-alto-security.md): App-ID, User-ID, and stateful inspection standards.
 * [Proxmox Networking](./proxmox-networking.md): VyOS NAT logic and physical hypervisor integration.
 
