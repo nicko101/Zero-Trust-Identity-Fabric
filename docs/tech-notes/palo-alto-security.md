@@ -86,20 +86,6 @@ This guarantees:
 
 The NVA is segmented into multiple Virtual Routers (VRs) to separate traffic domains:
 
-- **Trust VR**  
-  Handles internal and hybrid traffic (Spoke VNets, On-Prem, Identity services)
-
-- **Untrust VR**  
-  Handles internet-bound traffic and NAT egress
-
-This separation ensures deterministic routing and prevents unintended traffic leakage.
-
-![Trust VR Routing](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/nva_vr_trust.png)
-
-![Untrust VR Routing](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/nva-vr-untrust.png)
-
----
-
 ## Inter-VR Routing
 
 Traffic is explicitly passed between VRs based on destination:
