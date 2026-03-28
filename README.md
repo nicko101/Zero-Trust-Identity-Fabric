@@ -130,7 +130,7 @@ Extending authentication into Azure introduces visibility gaps and bypass risks.
 
 ---
 
-### Secure Certificate Lifecycle ([Entra App Proxy + Intune SCEP](./03-identity-policy-engine/))  
+### Secure Certificate Lifecycle ([Entra App Proxy + Intune SCEP](./03-identity-policy-engine/))  
 Traditional SCEP/NDES requires inbound exposure.
 
 → Entra App Proxy enables outbound-only certificate delivery with Intune-managed SCEP profiles.
@@ -138,6 +138,7 @@ Traditional SCEP/NDES requires inbound exposure.
 ![Secure Certificate Lifecycle](./diagrams/app-proxy.png)
 
 *Figure: Entra App Proxy enabling secure outbound-only certificate retrieval, removing the need for inbound exposure to NDES.*
+
 ---
 
 ## Technical Deep Dives
