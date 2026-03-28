@@ -136,6 +136,7 @@ Default route:
 
 - Default route to Internet via external interface
 - Handles NAT and return traffic
+![Trust VR Routing](https://raw.githubusercontent.com/nicko101/Zero-Trust-Identity-Fabric/main/02-transit-security-hub-azure/implementation-logic/images/nva-vr-untrust.png)
 
 ---
 
