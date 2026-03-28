@@ -11,7 +11,7 @@
 
 This project demonstrates a production-style **Zero Trust architecture spanning on-premises infrastructure and Microsoft Azure**, built to enforce identity-driven access across a hybrid environment.
 
-A single access request is orchestrated across three control planes:
+Each access request is enforced across three control planes:
 
 - Identity (ClearPass + Intune)  
 - Network Enforcement (Aruba + DUR)  
@@ -59,17 +59,15 @@ The fabric integrates:
 - **Identity & Compliance (Entra ID + Intune)**  
   Cloud-based device compliance and certificate lifecycle management  
 
-Together, these components form a **fully integrated Zero Trust access model**.
-
----
+Together, these components form a **fully integrated Zero Trust access model**
 
 ---
 
 ## Engineering Analysis
 
-Detailed design decisions, trade-offs, and architectural reasoning behind this implementation are documented separately.
+Detailed design decisions, trade-offs, and architectural reasoning:
 
-[View Full Engineering Analysis](./docs/engineering-analysis.md)
+[View Engineering Analysis](./docs/engineering-analysis.md)
 
 ---
 
@@ -142,7 +140,7 @@ Traditional SCEP/NDES requires inbound exposure.
 *Figure: Entra App Proxy enabling secure outbound-only certificate retrieval, removing the need for inbound exposure to NDES.*
 ---
 
-## Engineering Deep Dives
+## Technical Deep Dives
 
 Detailed breakdowns of key components and design decisions:
 
@@ -161,7 +159,7 @@ Detailed breakdowns of key components and design decisions:
 
 Each module includes full validation evidence, including:
 
-- Routing validation (BGP, traceroute, flow logs)  
+- Routing validation (flow logs, path verification)
 - Identity validation (ClearPass Access Tracker)  
 - Compliance validation (Intune integration)  
 - End-to-end Zero Trust flow verification  
