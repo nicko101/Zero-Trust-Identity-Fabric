@@ -1,7 +1,7 @@
 # Zero-Trust Identity Fabric
 ## Full-Stack Enterprise ZTNA and Hybrid Cloud Transit Hub
 
-![Unified Fabric Flow](./diagrams/unified.png)
+![Unified Fabric Flow](./diagrams/fabric_overview.png)
 
 *Figure: End-to-end Zero Trust architecture showing identity enforcement, dynamic segmentation, and hybrid transit across on-prem and Azure.*
 
