@@ -31,4 +31,7 @@ To close the loop, Spoke subnets in Azure utilize UDRs to force the return path.
 ---
 
 **Navigation**
+
+---
+
 [Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

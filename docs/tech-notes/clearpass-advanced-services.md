@@ -36,4 +36,9 @@ The guest lifecycle is fully automated to provide secure access with minimal adm
 * **Isolation:** ClearPass instructs the infrastructure to place these devices in **VLAN 50**, where the Palo Alto NVA enforces strict internet-only outbound policies.
 
 ---
+
+**Navigation**
+
+---
+
 [Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

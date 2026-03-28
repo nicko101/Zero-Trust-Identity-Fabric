@@ -35,4 +35,4 @@ The PKI serves as the primary anchor of trust during the transition from legacy 
 
 ---
 
-[Back to Engineering Analysis](../engineering-analysis.md)
+[Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

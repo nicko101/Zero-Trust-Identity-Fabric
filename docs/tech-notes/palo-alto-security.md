@@ -25,4 +25,4 @@ Every security rule is hardened with **Threat Prevention** profiles to block kno
 
 ---
 
-[Back to Engineering Analysis](../engineering-analysis.md)
+[Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

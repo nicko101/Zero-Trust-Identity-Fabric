@@ -15,4 +15,4 @@ We utilize the **Microsoft Entra Private Network Connector** to bridge the gap b
 
 ---
 
-[Back to Engineering Analysis](../engineering-analysis.md)
+[Back to Engineering Analysis](../engineering-analysis.md) | [Back to Main Architecture](../../README.md)

@@ -4,6 +4,17 @@ This directory documents the as-built configuration and technical logic for the 
 
 ---
 
+This module represents the **foundational layer of the fabric**, providing the compute, identity, and network control systems that all higher-layer services depend on.
+
+It integrates directly with:
+
+- The Azure Transit Security Hub for hybrid connectivity and traffic inspection  
+- The Identity Policy Engine for authentication, authorization, and compliance enforcement  
+
+Together, these layers form the complete Zero Trust architecture.
+
+---
+
 ## 1. Hypervisor Deployment (Proxmox VE)
 The infrastructure is anchored on a **Proxmox VE** hypervisor to provide a hardware-agnostic, snapshot-capable environment for security testing.
 
